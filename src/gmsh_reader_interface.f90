@@ -11,6 +11,8 @@ module gmsh_reader_interface
 
 
 
+    integer(INT32), parameter, private :: DEFAULT_DATA_SIZE = -1
+
     integer(INT32), parameter, private :: DEFAULT_MSH_FILE_MODE = -1
 
     integer(INT32), parameter, private :: DEFAULT_MAJOR_VERSION = -1
@@ -100,8 +102,13 @@ module gmsh_reader_interface
         !! 0 for ASCII mode
         !! 1 for binary mode
 
+        integer(INT32), private :: data_size = DEFAULT_DATA_SIZE
+        !! $MeshFormat\data-size
+        !! written as ASCII `int`
+
         contains
 
+        procedure,   pass, public  :: get_data_size
         procedure, nopass, private :: is_header_ascii    => is_header_ascii_mesh_format
         procedure,   pass, private :: read_section_ascii => read_section_ascii_mesh_format
 
@@ -214,6 +221,18 @@ module gmsh_reader_interface
 
 
     interface ! for `mesh_format_t`
+
+        module pure elemental function get_data_size(mesh_format) result(data_size)
+
+            class(mesh_format_t), intent(in) :: mesh_format
+            !! A dummy argument for this FUNCTION
+
+            integer(INT32) :: data_size
+            !! The return value of this FUNCTION
+
+        end function
+
+
 
         module pure elemental function is_header_ascii_mesh_format(text_line) result(is_header)
 
@@ -454,6 +473,12 @@ submodule (gmsh_reader_interface) mesh_format_implementation
 
 
 
+    module procedure get_data_size
+        data_size = mesh_format%data_size
+    end procedure
+
+
+
     module procedure is_header_ascii_mesh_format
         is_header = ( trim(text_line) .eq. '$MeshFormat')
     end procedure
@@ -515,18 +540,22 @@ submodule (gmsh_reader_interface) mesh_format_implementation
 
 
 
+            mesh_format%data_size = DEFAULT_DATA_SIZE
+
             read( &!
                 unit   = text_line(index_space:) , &!
                 fmt    = *                       , &!
                 iostat = stat                    , &!
                 iomsg  = msg                       &!
             ) &!
-            file_type
+            file_type , &!
+            mesh_format%data_size
 
             if (stat .ne. IOSTAT_OK) then
                 return
             end if
 
+            call mesh_format%file_type%reset()
             call mesh_format%file_type%setup(file_type)
 
         end associate
