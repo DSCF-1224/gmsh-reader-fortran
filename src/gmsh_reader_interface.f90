@@ -11,10 +11,34 @@ module gmsh_reader_interface
 
 
 
+    integer(INT32), parameter, private :: DEFAULT_MAJOR_VERSION = -1
+    integer(INT32), parameter, private :: DEFAULT_MINOR_VERSION = -1
+
     integer, parameter, private :: IOSTAT_OK = 0
 
     integer, parameter, private :: LEN_TEXT_LINE = 2048
     !! text line buffer length
+
+
+
+    type :: mesh_version_t
+    !! $MeshFormat\version
+    !! written as ASCII `double`
+
+        integer(INT32), private :: major = DEFAULT_MAJOR_VERSION
+        integer(INT32), private :: minor = DEFAULT_MINOR_VERSION
+
+        contains
+
+        procedure, pass, public  :: get_major
+        procedure, pass, public  :: get_minor
+        procedure, pass, private :: reset_mesh_version
+        procedure, pass, private :: setup_mesh_version
+
+        generic, private :: reset => reset_mesh_version
+        generic, private :: setup => setup_mesh_version
+
+    end type
 
 
 
@@ -32,6 +56,10 @@ module gmsh_reader_interface
 
 
     type, extends(data_section_t) :: mesh_format_t
+
+        type(mesh_version_t), public :: version
+        !! $MeshFormat\version
+        !! written as ASCII `double`
 
         contains
 
@@ -184,6 +212,62 @@ module gmsh_reader_interface
 
     end interface
 
+
+
+    interface ! for `mesh_version_t`
+
+        module pure elemental function get_major(mesh_version) result(major)
+
+            class(mesh_version_t), intent(in) :: mesh_version
+            !! A dummy argument for this FUNCTION
+
+            integer(INT32) :: major
+            !! The return value of this FUNCTION
+
+        end function
+
+
+
+        module pure elemental function get_minor(mesh_version) result(minor)
+
+            class(mesh_version_t), intent(in) :: mesh_version
+            !! A dummy argument for this FUNCTION
+
+            integer(INT32) :: minor
+            !! The return value of this FUNCTION
+
+        end function
+
+
+
+        module elemental subroutine reset_mesh_version(mesh_version)
+
+            class(mesh_version_t), intent(inout) :: mesh_version
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module elemental subroutine setup_mesh_version(mesh_version, source, iostat, iomsg)
+
+            class(mesh_version_t), intent(inout) :: mesh_version
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(in) :: source
+            !! A dummy argument for this SUBROUTINE
+            !! Read version data as a string
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+    end interface
+
 end module
 
 
@@ -274,7 +358,7 @@ end submodule
 
 
 
-submodule (gmsh_reader_interface) mesh_format_t_implementation
+submodule (gmsh_reader_interface) mesh_format_implementation
 
     implicit none
 
@@ -290,6 +374,11 @@ submodule (gmsh_reader_interface) mesh_format_t_implementation
 
     module procedure read_section_ascii_mesh_format
 
+        integer :: index_space
+        !! A local variable for this PROCEDURE
+
+
+
         associate( mesh_format => data_section )
 
             call mesh_format%find_header_ascii( &!
@@ -303,7 +392,116 @@ submodule (gmsh_reader_interface) mesh_format_t_implementation
                 return
             end if
 
+
+
+            read( &!
+                unit   = read_unit , &!
+                fmt    = '(A)'     , &!
+                iostat = stat      , &!
+                iomsg  = msg         &!
+            ) &!
+            text_line
+
+            if (stat .ne. IOSTAT_OK) then
+                return
+            end if
+
+
+
+            index_space = index(string=text_line, substring=' ')
+
+
+
+            call mesh_format%version%setup( &!
+                source = text_line(:index_space) , &!
+                iostat = stat                    , &!
+                iomsg  = msg                       &!
+            )
+
+            if (stat .ne. IOSTAT_OK) then
+                return
+            end if
+
         end associate
+
+    end procedure
+
+end submodule
+
+
+
+submodule (gmsh_reader_interface) mesh_version_implementation
+
+    implicit none
+
+    contains
+
+
+
+    module procedure get_major
+        major = mesh_version%major
+    end procedure
+
+
+
+    module procedure get_minor
+        minor = mesh_version%minor
+    end procedure
+
+
+
+    module procedure reset_mesh_version
+        mesh_version%major = DEFAULT_MAJOR_VERSION
+        mesh_version%minor = DEFAULT_MINOR_VERSION
+    end procedure
+
+
+
+    module procedure setup_mesh_version
+
+        integer :: index_period
+        !! A local variable for this PROCEDURE
+
+
+        call mesh_version%reset()
+
+        index_period = index(string=source, substring='.')
+
+        select case(index_period)
+
+            case(0)
+
+                read( &!
+                    unit   = source(:) , &!
+                    fmt    = *         , &!
+                    iostat = iostat    , &!
+                    iomsg  = iomsg       &!
+                ) &!
+                mesh_version%major
+
+            case default
+
+                read( &!
+                    unit   = source( :(index_period - 1) ) , &!
+                    fmt    = *                             , &!
+                    iostat = iostat                        , &!
+                    iomsg  = iomsg                           &!
+                ) &!
+                mesh_version%major
+
+                if (iostat .ne. IOSTAT_OK) then
+                    return
+                end if
+
+                read( &!
+                    unit   = source( (index_period + 1): ) , &!
+                    fmt    = *                             , &!
+                    iostat = iostat                        , &!
+                    iomsg  = iomsg                           &!
+                ) &!
+                mesh_version%minor
+
+        end select
 
     end procedure
 

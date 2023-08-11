@@ -42,6 +42,10 @@ program test
             error stop
         end if
 
+        print * , 'file path            : ', trim(file_path)
+        print * , '$MeshVersion / Major : ', msh_file%mesh_format%version%get_major()
+        print * , '$MeshVersion / Minor : ', msh_file%mesh_format%version%get_minor()
+
     end subroutine
 
 end program
