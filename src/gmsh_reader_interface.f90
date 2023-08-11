@@ -11,6 +11,10 @@ module gmsh_reader_interface
 
 
 
+    integer, parameter, private :: IOSTAT_OK = 0
+
+
+
     type :: gmsh_msh_file_t
 
         contains
@@ -18,10 +22,6 @@ module gmsh_reader_interface
         procedure, pass, public :: read_file
 
     end type
-
-
-
-    integer, parameter, private :: IOSTAT_OK = 0
 
 
 
