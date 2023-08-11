@@ -11,6 +11,8 @@ module gmsh_reader_interface
 
 
 
+    integer(INT32), parameter, private :: DEFAULT_MSH_FILE_MODE = -1
+
     integer(INT32), parameter, private :: DEFAULT_MAJOR_VERSION = -1
     integer(INT32), parameter, private :: DEFAULT_MINOR_VERSION = -1
 
@@ -19,6 +21,13 @@ module gmsh_reader_interface
     integer, parameter, private :: LEN_TEXT_LINE = 2048
     !! text line buffer length
 
+    integer(INT32), parameter, private :: MSH_FILE_MODE_ASCII = 0
+    !! $MeshFormat\file-type
+    !! for ASCII mode
+
+    integer(INT32), parameter, private :: MSH_FILE_MODE_BINARY = 1
+    !! $MeshFormat\file-type
+    !! for binary mode
 
 
     type :: mesh_version_t
@@ -42,6 +51,30 @@ module gmsh_reader_interface
 
 
 
+    type :: msh_file_mode_t
+    !! $MeshFormat\file-type
+    !! written as ASCII `int`
+    !! 0 for ASCII mode
+    !! 1 for binary mode
+
+        integer(INT32), private :: value = DEFAULT_MSH_FILE_MODE
+
+        contains
+        
+        procedure, pass, private :: get_file_mode_as_int32
+        procedure, pass, private :: get_file_mode_as_str
+        procedure, pass, private :: reset_msh_file_mode
+        procedure, pass, private :: setup_msh_file_mode
+
+        generic, private :: reset        => reset_msh_file_mode
+        generic, private :: setup        => setup_msh_file_mode
+        generic, public  :: get_as_int32 => get_file_mode_as_int32
+        generic, public  :: get_as_str   => get_file_mode_as_str
+
+    end type
+
+
+
     type, abstract :: data_section_t
 
         contains
@@ -60,6 +93,12 @@ module gmsh_reader_interface
         type(mesh_version_t), public :: version
         !! $MeshFormat\version
         !! written as ASCII `double`
+
+        type(msh_file_mode_t), public :: file_type
+        !! $MeshFormat\file-type
+        !! written as ASCII `int`
+        !! 0 for ASCII mode
+        !! 1 for binary mode
 
         contains
 
@@ -268,6 +307,55 @@ module gmsh_reader_interface
 
     end interface
 
+
+
+    interface ! for `msh_file_mode_t`
+
+        module pure elemental function get_file_mode_as_int32(msh_file_mode) result(file_type)
+
+            class(msh_file_mode_t), intent(in) :: msh_file_mode
+            !! A dummy argument for this FUNCTION
+
+            integer(INT32) :: file_type
+            !! The return value of this FUNCTION
+
+        end function
+
+
+
+        module pure function get_file_mode_as_str(msh_file_mode) result(file_type)
+
+            class(msh_file_mode_t), intent(in) :: msh_file_mode
+            !! A dummy argument for this FUNCTION
+
+            character(len=6), allocatable :: file_type
+            !! The return value of this FUNCTION
+
+        end function
+
+
+
+        module subroutine reset_msh_file_mode(msh_file_mode)
+
+            class(msh_file_mode_t), intent(inout) :: msh_file_mode
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine setup_msh_file_mode(msh_file_mode, source)
+
+            class(msh_file_mode_t), intent(inout) :: msh_file_mode
+            !! A dummy argument for this SUBROUTINE
+
+            integer(INT32), intent(in) :: source
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+    end interface
+
 end module
 
 
@@ -374,6 +462,9 @@ submodule (gmsh_reader_interface) mesh_format_implementation
 
     module procedure read_section_ascii_mesh_format
 
+        integer(INT32) :: file_type
+        !! A local variable for this PROCEDURE
+
         integer :: index_space
         !! A local variable for this PROCEDURE
 
@@ -421,6 +512,22 @@ submodule (gmsh_reader_interface) mesh_format_implementation
             if (stat .ne. IOSTAT_OK) then
                 return
             end if
+
+
+
+            read( &!
+                unit   = text_line(index_space:) , &!
+                fmt    = *                       , &!
+                iostat = stat                    , &!
+                iomsg  = msg                       &!
+            ) &!
+            file_type
+
+            if (stat .ne. IOSTAT_OK) then
+                return
+            end if
+
+            call mesh_format%file_type%setup(file_type)
 
         end associate
 
@@ -503,6 +610,46 @@ submodule (gmsh_reader_interface) mesh_version_implementation
 
         end select
 
+    end procedure
+
+end submodule
+
+
+
+submodule (gmsh_reader_interface) msh_file_mode_implementation
+
+    implicit none
+
+    contains
+
+
+
+    module procedure get_file_mode_as_int32
+        file_type = msh_file_mode%value
+    end procedure
+
+
+
+    module procedure get_file_mode_as_str
+
+        select case ( msh_file_mode%value )
+            case ( MSH_FILE_MODE_ASCII  ) ; file_type = 'ASCII '
+            case ( MSH_FILE_MODE_BINARY ) ; file_type = 'binary'
+            case default                  ; file_type = '#N/A'
+        end select
+
+    end procedure
+
+
+
+    module procedure reset_msh_file_mode
+        msh_file_mode%value = DEFAULT_MSH_FILE_MODE
+    end procedure
+
+
+
+    module procedure setup_msh_file_mode
+        msh_file_mode%value = source
     end procedure
 
 end submodule

@@ -42,9 +42,12 @@ program test
             error stop
         end if
 
+        print * ! BLANK_LINE
         print * , 'file path            : ', trim(file_path)
         print * , '$MeshVersion / Major : ', msh_file%mesh_format%version%get_major()
         print * , '$MeshVersion / Minor : ', msh_file%mesh_format%version%get_minor()
+        print * , '$MeshVersion / MODE  : ', msh_file%mesh_format%file_type%get_as_int32() , &!
+        &         ' (',                      msh_file%mesh_format%file_type%get_as_str()   , ')'
 
     end subroutine
 
