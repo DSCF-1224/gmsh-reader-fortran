@@ -1059,6 +1059,18 @@ submodule (gmsh_reader_interface) physical_names_implementation
 
         associate( physical_names => data_section )
 
+            rewind( &!
+                unit   = read_unit , &!
+                iostat = stat      , &!
+                iomsg  = msg         &!
+            )
+
+            if (stat .ne. IOSTAT_OK) then
+                return
+            end if
+
+
+
             call physical_names%find_header_ascii( &!
                 read_unit = read_unit , &!
                 text_line = text_line , &!
