@@ -48,5 +48,4 @@ release_mode:
 	make run_exe
 
 run_exe:
-	time $(TARGET)
-  
+	time $(TARGET) >./output_unit.txt 2>./error_unit.txt
