@@ -5,10 +5,10 @@ program test
 
     implicit none
 
-    call run_test('data/t1-bin.msh2')
-    call run_test('data/t1-bin.msh4')
-    call run_test('data/t1-txt.msh2')
-    call run_test('data/t1-txt.msh4')
+    call run_test('t1-bin.msh2')
+    call run_test('t1-bin.msh4')
+    call run_test('t1-txt.msh2')
+    call run_test('t1-txt.msh4')
 
     print *  ! BLANK_LINE
     print *, 'SUCCESS'
@@ -16,9 +16,14 @@ program test
 
     contains
 
-    subroutine run_test(file_path)
+    subroutine run_test(file_name)
 
-        character(len=*), intent(in) :: file_path
+        character(len=*), parameter :: data_folder_path = 'data/'
+        !! A `PARAMETER` for this SUBROUTINE
+
+
+
+        character(len=*), intent(in) :: file_name
         !! A dummy argument for this SUBROUTINE
 
         integer :: stat
@@ -30,11 +35,15 @@ program test
         type(gmsh_msh_file_t) :: msh_file
         !! A local variable for this SUBROUTINE
 
+
+
         call msh_file%read_file( &!
-            file_path = file_path , &!
-            stat      = stat      , &!
-            msg       = msg         &!
+            file_path = data_folder_path // file_name , &!
+            stat      = stat                          , &!
+            msg       = msg                             &!
         )
+
+
 
         if (stat .ne. 0) then
             write(ERROR_UNIT, *) stat
@@ -44,7 +53,7 @@ program test
 
         print * ! BLANK_LINE
         print * ! BLANK_LINE
-        print * , 'file path                         : ', trim(file_path)
+        print * , 'file path                         : ', trim( data_folder_path // file_name )
         print * ! BLANK_LINE
         print * , '$MeshVersion   / Major            : ',       msh_file%mesh_format%version%get_major()
         print * , '$MeshVersion   / Minor            : ',       msh_file%mesh_format%version%get_minor()
