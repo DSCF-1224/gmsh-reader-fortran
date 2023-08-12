@@ -18,11 +18,15 @@ module gmsh_reader_interface
     integer(INT32), parameter, private :: DEFAULT_MAJOR_VERSION = -1
     integer(INT32), parameter, private :: DEFAULT_MINOR_VERSION = -1
 
-    integer, parameter, private :: IOSTAT_OK = 0
+    integer(INT32), parameter, private :: DEFAULT_NUM_PHYSICAL_NAMES = -1
 
+    integer, parameter, private :: IOSTAT_OK = 0
+    
+    integer, parameter, private :: LEN_PHYSICAL_NAME = 127
+    
     integer, parameter, private :: LEN_TEXT_LINE = 2048
     !! text line buffer length
-
+    
     integer(INT32), parameter, private :: MSH_FILE_MODE_ASCII = 0
     !! $MeshFormat\file-type
     !! for ASCII mode
@@ -30,6 +34,8 @@ module gmsh_reader_interface
     integer(INT32), parameter, private :: MSH_FILE_MODE_BINARY = 1
     !! $MeshFormat\file-type
     !! for binary mode
+
+    integer, parameter, private :: STAT_OK = 0
 
 
     type :: mesh_version_t
@@ -90,6 +96,17 @@ module gmsh_reader_interface
 
 
 
+    type, extends(data_section_t), abstract :: allocatable_data_section_t
+
+        contains
+
+        procedure( allocate_field_abstract   ), pass, private, deferred :: allocate_field
+        procedure( deallocate_field_abstract ), pass, private, deferred :: deallocate_field
+
+    end type
+
+
+
     type, extends(data_section_t) :: mesh_format_t
 
         type(mesh_version_t), public :: version
@@ -116,6 +133,39 @@ module gmsh_reader_interface
 
 
 
+    type, extends(allocatable_data_section_t) :: physical_names_t
+
+        integer(INT32), private :: num_physical_names = DEFAULT_NUM_PHYSICAL_NAMES
+        !! $PhysicalNames\numPhysicalNames
+        !! written as ASCII `int`
+
+        integer(INT32), dimension(:), allocatable, private :: physical_dimension
+        !! $PhysicalNames\dimension
+        !! written as ASCII `int`
+
+        integer(INT32), dimension(:), allocatable, private :: physical_tag
+        !! $PhysicalNames\dimension
+        !! written as ASCII `int`
+
+        character(len=LEN_PHYSICAL_NAME), dimension(:), allocatable, private :: physical_name
+        !! $PhysicalNames\physicalNames
+        !! 127 characters max
+
+        contains
+
+        procedure,   pass, private :: allocate_field         => allocate_field_physical_names
+        procedure,   pass, private :: deallocate_field       => deallocate_field_physical_names
+        procedure,   pass, public  :: get_physical_dimension
+        procedure,   pass, public  :: get_num_physical_name
+        procedure,   pass, public  :: get_num_physical_names
+        procedure,   pass, public  :: get_num_physical_tag
+        procedure, nopass, private :: is_header_ascii        => is_header_ascii_physical_names
+        procedure,   pass, private :: read_section_ascii     => read_section_ascii_physical_names
+
+    end type
+
+
+
     type :: gmsh_msh_file_t
 
         integer, private :: stat
@@ -127,11 +177,48 @@ module gmsh_reader_interface
         type(mesh_format_t), public :: mesh_format
         !! Store the data from `$MeshFormat` section
 
+        type(physical_names_t), public :: physical_names
+        !! Store the data from `$PhysicalNames` section
+
         contains
 
         procedure, pass, public :: read_file
 
     end type
+
+
+
+    interface ! for `allocatable_data_section_t`
+
+        module subroutine allocate_field_abstract(data_section, stat, errmsg)
+
+            class(allocatable_data_section_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: errmsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine deallocate_field_abstract(data_section, stat, errmsg)
+
+            class(allocatable_data_section_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: errmsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+    end interface
 
 
 
@@ -375,6 +462,133 @@ module gmsh_reader_interface
 
     end interface
 
+
+
+    interface ! for `physical_names_t`
+
+        module pure elemental function get_physical_dimension(physical_names, index) result(physical_dimension)
+
+            class(physical_names_t), intent(in) :: physical_names
+            !! A dummy argument for this FUNCTION
+
+            integer(INT32), intent(in) :: index
+            !! A dummy argument for this FUNCTION
+
+            integer(INT32) :: physical_dimension
+            !! The return value of this FUNCTION
+
+        end function
+
+
+
+        module pure elemental function get_num_physical_name(physical_names, index) result(physical_name)
+
+            class(physical_names_t), intent(in) :: physical_names
+            !! A dummy argument for this FUNCTION
+
+            integer(INT32), intent(in) :: index
+            !! A dummy argument for this FUNCTION
+
+            character(len=LEN_PHYSICAL_NAME) :: physical_name
+            !! The return value of this FUNCTION
+
+        end function
+
+
+
+        module pure elemental function get_num_physical_names(physical_names) result(num_physical_names)
+
+            class(physical_names_t), intent(in) :: physical_names
+            !! A dummy argument for this FUNCTION
+
+            integer(INT32) :: num_physical_names
+            !! The return value of this FUNCTION
+
+        end function
+
+
+
+        module pure elemental function get_num_physical_tag(physical_names, index) result(physical_tag)
+
+            class(physical_names_t), intent(in) :: physical_names
+            !! A dummy argument for this FUNCTION
+
+            integer(INT32), intent(in) :: index
+            !! A dummy argument for this FUNCTION
+
+            integer(INT32) :: physical_tag
+            !! The return value of this FUNCTION
+
+        end function
+
+
+
+        module pure elemental function is_header_ascii_physical_names(text_line) result(is_header)
+
+            character(len=LEN_TEXT_LINE), intent(in) :: text_line
+            !! A dummy argument for this FUNCTION
+            !! Read text line buffer
+
+            logical :: is_header
+            !! The return value of this FUNCTION
+
+        end function
+
+
+
+        module subroutine allocate_field_physical_names(data_section, stat, errmsg)
+
+            class(physical_names_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: errmsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine deallocate_field_physical_names(data_section, stat, errmsg)
+
+            class(physical_names_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: errmsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine read_section_ascii_physical_names(data_section, read_unit, text_line, stat, msg)
+
+            class(physical_names_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: read_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            character(len=LEN_TEXT_LINE), intent(inout) :: text_line
+            !! A dummy argument for this SUBROUTINE
+            !! Read text line buffer
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: msg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+    end interface
+
 end module
 
 
@@ -450,6 +664,20 @@ submodule (gmsh_reader_interface) gmsh_msh_file_implementation
         )
 
         if (stat .ne. IOSTAT_OK) return
+
+
+
+        call gmsh_msh_file%physical_names%read_section_ascii( &!
+            read_unit = read_unit               , &!
+            text_line = gmsh_msh_file%text_line , &!
+            stat      = stat                    , &!
+            msg       = msg                       &!
+        )
+
+        select case (stat)
+            case (IOSTAT_END) ; ! NOTHING TO DO HERE
+            case default      ; return
+        end select
 
 
 
@@ -679,6 +907,212 @@ submodule (gmsh_reader_interface) msh_file_mode_implementation
 
     module procedure setup_msh_file_mode
         msh_file_mode%value = source
+    end procedure
+
+end submodule
+
+
+
+submodule (gmsh_reader_interface) physical_names_implementation
+
+    implicit none
+
+    contains
+
+
+
+    module procedure allocate_field_physical_names
+
+        associate( physical_names => data_section )
+
+            allocate( &!
+                physical_names%physical_dimension(physical_names%num_physical_names), &!
+                stat   = stat   , &!
+                errmsg = errmsg   &!
+            )
+            
+            if (stat .ne. STAT_OK) return
+
+
+
+            allocate( &!
+                physical_names%physical_tag(physical_names%num_physical_names), &!
+                stat   = stat   , &!
+                errmsg = errmsg   &!
+            )
+            
+            if (stat .ne. STAT_OK) return
+
+
+
+            allocate( &!
+                physical_names%physical_name(physical_names%num_physical_names), &!
+                stat   = stat   , &!
+                errmsg = errmsg   &!
+            )
+
+        end associate
+
+    end procedure
+
+
+
+    module procedure deallocate_field_physical_names
+
+        associate( physical_names => data_section )
+
+            stat = STAT_OK
+
+
+
+            if ( allocated(physical_names%physical_dimension) ) then
+
+                allocate( &!
+                    physical_names%physical_dimension(physical_names%num_physical_names), &!
+                    stat   = stat   , &!
+                    errmsg = errmsg   &!
+                )
+                
+                if (stat .ne. STAT_OK) return
+
+            end if
+
+
+
+            if ( allocated(physical_names%physical_tag) ) then
+
+                allocate( &!
+                    physical_names%physical_tag(physical_names%num_physical_names), &!
+                    stat   = stat   , &!
+                    errmsg = errmsg   &!
+                )
+                
+                if (stat .ne. STAT_OK) return
+
+            end if
+
+
+
+            if ( allocated(physical_names%physical_name) ) then
+
+                allocate( &!
+                    physical_names%physical_name(physical_names%num_physical_names), &!
+                    stat   = stat   , &!
+                    errmsg = errmsg   &!
+                )
+
+            end if
+
+        end associate
+
+    end procedure
+
+
+
+    module procedure get_physical_dimension
+        physical_dimension = physical_names%physical_dimension(index)
+    end procedure
+
+
+
+    module procedure get_num_physical_name
+        physical_name = physical_names%physical_name(index)
+    end procedure
+
+
+
+    module procedure get_num_physical_names
+        num_physical_names = physical_names%num_physical_names
+    end procedure
+
+
+
+    module procedure get_num_physical_tag
+        physical_tag = physical_names%physical_tag(index)
+    end procedure
+
+
+
+    module procedure is_header_ascii_physical_names
+        is_header = ( trim(text_line) .eq. '$PhysicalNames')
+    end procedure
+
+
+
+    module procedure read_section_ascii_physical_names
+
+        integer(INT32) :: iter_item
+        !! A local support variable for this PROCEDURE
+
+
+
+        associate( physical_names => data_section )
+
+            call physical_names%find_header_ascii( &!
+                read_unit = read_unit , &!
+                text_line = text_line , &!
+                iostat    = stat      , &!
+                iomsg     = msg         &!
+            )
+
+            if (stat .ne. IOSTAT_OK) then
+
+                return
+
+            else if (stat .eq. IOSTAT_END) then
+
+                physical_names%num_physical_names = 0
+
+                call physical_names%deallocate_field(stat, msg)
+
+                return
+
+            end if
+
+
+
+            call physical_names%deallocate_field(stat, msg)
+
+
+
+            read( &!
+                unit   = read_unit , &!
+                fmt    = *         , &!
+                iostat = stat      , &!
+                iomsg  = msg         &!
+            ) &!
+            physical_names%num_physical_names
+
+            if (stat .ne. IOSTAT_OK) then
+                return
+            end if
+
+
+
+            call physical_names%allocate_field(stat, msg)
+
+
+
+            do iter_item = 1, physical_names%get_num_physical_names()
+
+                read( &!
+                    unit   = read_unit , &!
+                    fmt    = *         , &!
+                    iostat = stat      , &!
+                    iomsg  = msg         &!
+                ) &!
+                physical_names%physical_dimension (iter_item) , &!
+                physical_names%physical_tag       (iter_item) , &!
+                physical_names%physical_name      (iter_item)
+
+                if (stat .ne. IOSTAT_OK) then
+                    return
+                end if
+
+            end do
+
+        end associate
+
     end procedure
 
 end submodule
