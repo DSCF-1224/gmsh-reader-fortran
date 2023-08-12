@@ -35,7 +35,7 @@ $(TARGET): $(OBJS)
 	$(FC) $(FFLAGS) -c $<
 
 clean:
-	rm ./*.exe ./*.mod ./*.o ./*.smod
+	rm ./*.exe ./*.mod ./*.o ./*.smod ./*.txt
 
 debug_mode:
 	make clean; \
