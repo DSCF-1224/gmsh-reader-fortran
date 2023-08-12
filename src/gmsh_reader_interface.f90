@@ -193,7 +193,9 @@ module gmsh_reader_interface
 
         contains
 
-        procedure, pass, public :: read_file
+        procedure, pass, public  :: read_file
+        procedure, pass, private :: read_file_fore
+        procedure, pass, private :: read_file_rear
 
     end type
 
@@ -305,6 +307,47 @@ module gmsh_reader_interface
 
             character(len=*), intent(in) :: file_path
             !! A dummy argument for this SUBROUTINE
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: msg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine read_file_fore(gmsh_msh_file, file_path, read_unit, stat, msg)
+
+            class(gmsh_msh_file_t), intent(inout) :: gmsh_msh_file
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(in) :: file_path
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(out) :: read_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: msg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine read_file_rear(gmsh_msh_file, read_unit, stat, msg)
+
+            class(gmsh_msh_file_t), intent(inout) :: gmsh_msh_file
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: read_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
 
             integer, intent(out) :: stat
             !! A dummy argument for this SUBROUTINE
@@ -653,6 +696,42 @@ submodule (gmsh_reader_interface) gmsh_msh_file_implementation
         integer :: read_unit
         !! A local variable for this SUBROUTINE
 
+
+
+        call gmsh_msh_file%read_file_fore( &!
+            file_path = file_path , &!
+            read_unit = read_unit , &!
+            stat      = stat      , &!
+            msg       = msg         &!
+        )
+
+        select case (stat)
+            case (IOSTAT_END) ; ! NOTHING TO DO HERE
+            case default      ; return
+        end select
+
+
+
+        call gmsh_msh_file%read_file_rear( &!
+            read_unit = read_unit , &!
+            stat      = stat      , &!
+            msg       = msg         &!
+        )
+
+
+
+        close( &!
+            unit   = read_unit , &!
+            iostat = stat      , &!
+            iomsg  = msg         &!
+        )
+
+    end procedure
+
+
+
+    module procedure read_file_fore
+
         open( &!
             newunit = read_unit   , &!
             action  = 'READ'      , &!
@@ -685,19 +764,11 @@ submodule (gmsh_reader_interface) gmsh_msh_file_implementation
             msg       = msg                       &!
         )
 
-        select case (stat)
-            case (IOSTAT_END) ; ! NOTHING TO DO HERE
-            case default      ; return
-        end select
+    end procedure
 
 
 
-        close( &!
-            unit   = read_unit , &!
-            iostat = stat      , &!
-            iomsg  = msg         &!
-        )
-
+    module procedure read_file_rear
     end procedure
 
 end submodule
