@@ -12,21 +12,32 @@ module gmsh_reader_interface
 
 
     integer(INT32), parameter, private :: DEFAULT_DATA_SIZE = -1
+    !! $MeshFormat\data-size
+    !! written as ASCII `int`
 
     integer(INT32), parameter, private :: DEFAULT_MSH_FILE_MODE = -1
+    !! $MeshFormat\file-type
+    !! written as ASCII `int`
+    !! 0 for ASCII mode
+    !! 1 for binary mode
 
     integer(INT32), parameter, private :: DEFAULT_MAJOR_VERSION = -1
+    !! $MeshFormat\version
+
     integer(INT32), parameter, private :: DEFAULT_MINOR_VERSION = -1
+    !! $MeshFormat\version
 
     integer(INT32), parameter, private :: DEFAULT_NUM_PHYSICAL_NAMES = -1
+    !! $PhysicalNames\numPhysicalNames
 
     integer, parameter, private :: IOSTAT_OK = 0
     
     integer, parameter, private :: LEN_PHYSICAL_NAME = 127
-    
+    !! $PhysicalNames\numPhysicalNames
+
     integer, parameter, private :: LEN_TEXT_LINE = 2048
     !! text line buffer length
-    
+
     integer(INT32), parameter, private :: MSH_FILE_MODE_ASCII = 0
     !! $MeshFormat\file-type
     !! for ASCII mode
