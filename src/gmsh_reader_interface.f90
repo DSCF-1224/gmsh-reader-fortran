@@ -49,6 +49,7 @@ module gmsh_reader_interface
     integer, parameter, private :: STAT_OK = 0
 
 
+
     type :: mesh_version_t
     !! $MeshFormat\version
     !! written as ASCII `double`
@@ -80,15 +81,19 @@ module gmsh_reader_interface
 
         contains
         
-        procedure, pass, private :: get_file_mode_as_int32
-        procedure, pass, private :: get_file_mode_as_str
-        procedure, pass, private :: reset_msh_file_mode
-        procedure, pass, private :: setup_msh_file_mode
+        procedure, nopass, private :: get_ascii_file_mode_as_int32
+        procedure, nopass, private :: get_binary_file_mode_as_int32
+        procedure,   pass, private :: get_file_mode_as_int32
+        procedure,   pass, private :: get_file_mode_as_str
+        procedure,   pass, private :: reset_msh_file_mode
+        procedure,   pass, private :: setup_msh_file_mode
 
-        generic, private :: reset        => reset_msh_file_mode
-        generic, private :: setup        => setup_msh_file_mode
-        generic, public  :: get_as_int32 => get_file_mode_as_int32
-        generic, public  :: get_as_str   => get_file_mode_as_str
+        generic, private :: reset                    => reset_msh_file_mode
+        generic, private :: setup                    => setup_msh_file_mode
+        generic, public  :: get_as_int32             => get_file_mode_as_int32
+        generic, private :: get_ascii_mode_as_int32  => get_ascii_file_mode_as_int32
+        generic, private :: get_binary_mode_as_int32 => get_binary_file_mode_as_int32
+        generic, public  :: get_as_str               => get_file_mode_as_str
 
     end type
 
@@ -551,6 +556,24 @@ module gmsh_reader_interface
 
 
     interface ! for `msh_file_mode_t`
+
+        module pure elemental function get_ascii_file_mode_as_int32() result(file_type)
+
+            integer(INT32) :: file_type
+            !! The return value of this FUNCTION
+
+        end function
+
+
+
+        module pure elemental function get_binary_file_mode_as_int32() result(file_type)
+
+            integer(INT32) :: file_type
+            !! The return value of this FUNCTION
+
+        end function
+
+
 
         module pure elemental function get_file_mode_as_int32(msh_file_mode) result(file_type)
 
@@ -1066,9 +1089,9 @@ submodule (gmsh_reader_interface) mesh_format_implementation
                 iostat = iostat                 , &!
                 iomsg  = iomsg                    &!
             ) &!
-            mesh_format%version%get_major()      , &!
-            mesh_format%version%get_minor()      , &!
-            mesh_format%file_type%get_as_int32() , &!
+            mesh_format%version%get_major()                 , &!
+            mesh_format%version%get_minor()                 , &!
+            mesh_format%file_type%get_ascii_mode_as_int32() , &!
             mesh_format%get_data_size()
 
             if (iostat .ne. IOSTAT_OK) return
@@ -1175,6 +1198,18 @@ submodule (gmsh_reader_interface) msh_file_mode_implementation
     implicit none
 
     contains
+
+
+
+    module procedure get_ascii_file_mode_as_int32
+        file_type = MSH_FILE_MODE_ASCII
+    end procedure
+
+
+
+    module procedure get_binary_file_mode_as_int32
+        file_type = MSH_FILE_MODE_BINARY
+    end procedure
 
 
 
