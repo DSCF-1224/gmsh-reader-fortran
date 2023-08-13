@@ -31,7 +31,7 @@ module gmsh_reader_interface
     !! $PhysicalNames\numPhysicalNames
 
     integer, parameter, private :: IOSTAT_OK = 0
-    
+
     integer, parameter, private :: LEN_PHYSICAL_NAME = 127
     !! $PhysicalNames\numPhysicalNames
 
@@ -100,8 +100,9 @@ module gmsh_reader_interface
 
         procedure, pass, private :: find_header_ascii
 
-        procedure( is_header_ascii_abstract    ), nopass, private, deferred :: is_header_ascii
-        procedure( read_section_ascii_abstract ),   pass, private, deferred :: read_section_ascii
+        procedure( is_header_ascii_abstract     ), nopass, deferred, private :: is_header_ascii
+        procedure( read_section_ascii_abstract  ),   pass, deferred, private :: read_section_ascii
+        procedure( write_section_ascii_abstract ),   pass, deferred, public  :: write_section_ascii
 
     end type
 
@@ -137,8 +138,9 @@ module gmsh_reader_interface
         contains
 
         procedure,   pass, public  :: get_data_size
-        procedure, nopass, private :: is_header_ascii    => is_header_ascii_mesh_format
-        procedure,   pass, private :: read_section_ascii => read_section_ascii_mesh_format
+        procedure, nopass, private :: is_header_ascii     => is_header_ascii_mesh_format
+        procedure,   pass, private :: read_section_ascii  => read_section_ascii_mesh_format
+        procedure,   pass, public  :: write_section_ascii => write_section_ascii_mesh_format
 
     end type
 
@@ -164,14 +166,15 @@ module gmsh_reader_interface
 
         contains
 
-        procedure,   pass, private :: allocate_field         => allocate_field_physical_names
-        procedure,   pass, private :: deallocate_field       => deallocate_field_physical_names
+        procedure,   pass, private :: allocate_field          => allocate_field_physical_names
+        procedure,   pass, private :: deallocate_field        => deallocate_field_physical_names
         procedure,   pass, public  :: get_physical_dimension
         procedure,   pass, public  :: get_num_physical_name
         procedure,   pass, public  :: get_num_physical_names
         procedure,   pass, public  :: get_num_physical_tag
-        procedure, nopass, private :: is_header_ascii        => is_header_ascii_physical_names
-        procedure,   pass, private :: read_section_ascii     => read_section_ascii_physical_names
+        procedure, nopass, private :: is_header_ascii         => is_header_ascii_physical_names
+        procedure,   pass, private :: read_section_ascii      => read_section_ascii_physical_names
+        procedure,   pass, public  :: write_section_ascii     => write_section_ascii_physical_names
 
     end type
 
@@ -196,6 +199,8 @@ module gmsh_reader_interface
         procedure, pass, public  :: read_file
         procedure, pass, private :: read_file_fore
         procedure, pass, private :: read_file_rear
+        procedure, pass, public  :: write_file
+        procedure, pass, private :: write_file_main
 
     end type
 
@@ -294,6 +299,25 @@ module gmsh_reader_interface
 
         end subroutine
 
+
+
+        module subroutine write_section_ascii_abstract(data_section, write_unit, iostat, iomsg)
+
+            class(data_section_t), intent(in) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
     end interface
 
 
@@ -357,6 +381,44 @@ module gmsh_reader_interface
 
         end subroutine
 
+
+
+        module subroutine write_file(gmsh_msh_file, file_path, iostat, iomsg)
+
+            class(gmsh_msh_file_t), intent(in) :: gmsh_msh_file
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(in) :: file_path
+            !! A dummy argument for this SUBROUTINE
+            !! The path of the target file to write
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine write_file_main(gmsh_msh_file, write_unit, iostat, iomsg)
+
+            class(gmsh_msh_file_t), intent(in) :: gmsh_msh_file
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to write the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
     end interface
 
 
@@ -405,6 +467,25 @@ module gmsh_reader_interface
             !! A dummy argument for this SUBROUTINE
 
             character(len=*), intent(inout) :: msg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine write_section_ascii_mesh_format(data_section, write_unit, iostat, iomsg)
+
+            class(mesh_format_t), intent(in) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
             !! A dummy argument for this SUBROUTINE
 
         end subroutine
@@ -641,6 +722,25 @@ module gmsh_reader_interface
 
         end subroutine
 
+
+
+        module subroutine write_section_ascii_physical_names(data_section, write_unit, iostat, iomsg)
+
+            class(physical_names_t), intent(in) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
     end interface
 
 end module
@@ -695,6 +795,7 @@ submodule (gmsh_reader_interface) gmsh_msh_file_implementation
 
         integer :: read_unit
         !! A local variable for this SUBROUTINE
+        !! The device number to read the target file
 
 
 
@@ -771,6 +872,72 @@ submodule (gmsh_reader_interface) gmsh_msh_file_implementation
     module procedure read_file_rear
     end procedure
 
+
+
+    module procedure write_file
+
+        integer :: write_unit
+        !! A local variable for this SUBROUTINE
+        !! The device number to write the target file
+
+
+
+        open( &!
+            newunit = write_unit  , &!
+            action  = 'WRITE'     , &!
+            file    = file_path   , &!
+            form    = 'FORMATTED' , &!
+            iostat  = iostat      , &!
+            iomsg   = iomsg       , &!
+            status  = 'UNKNOWN'     &!
+        )
+
+        if (iostat .ne. IOSTAT_OK) return
+
+
+
+        call gmsh_msh_file%write_file_main( &!
+            write_unit = write_unit , &!
+            iostat     = iostat     , &!
+            iomsg      = iomsg        &!
+        )
+
+        if (iostat .ne. IOSTAT_OK) return
+
+
+
+        close( &!
+            unit   = write_unit , &!
+            iostat = iostat     , &!
+            iomsg  = iomsg        &!
+        )
+
+    end procedure
+
+
+
+    module procedure write_file_main
+
+        call gmsh_msh_file%mesh_format%write_section_ascii( &!
+            write_unit = write_unit , &!
+            iostat     = iostat     , &!
+            iomsg      = iomsg        &!
+        )
+
+        if     (iostat .ne. IOSTAT_OK) then ; return
+        else                                ; flush(write_unit)
+        end if
+
+
+
+        call gmsh_msh_file%physical_names%write_section_ascii( &!
+            write_unit = write_unit , &!
+            iostat     = iostat     , &!
+            iomsg      = iomsg        &!
+        )
+
+    end procedure
+
 end submodule
 
 
@@ -778,6 +945,9 @@ end submodule
 submodule (gmsh_reader_interface) mesh_format_implementation
 
     implicit none
+
+    character(len=*), parameter :: STR_FOOTER = '$EndMeshFormat'
+    character(len=*), parameter :: STR_HEADER = '$MeshFormat'
 
     contains
 
@@ -790,7 +960,7 @@ submodule (gmsh_reader_interface) mesh_format_implementation
 
 
     module procedure is_header_ascii_mesh_format
-        is_header = ( trim(text_line) .eq. '$MeshFormat')
+        is_header = ( trim(text_line) .eq. STR_HEADER )
     end procedure
 
 
@@ -867,6 +1037,51 @@ submodule (gmsh_reader_interface) mesh_format_implementation
 
             call mesh_format%file_type%reset()
             call mesh_format%file_type%setup(file_type)
+
+        end associate
+
+    end procedure
+
+
+
+    module procedure write_section_ascii_mesh_format
+
+        associate( mesh_format => data_section )
+
+            write( &!
+                unit   = write_unit , &!
+                fmt    = '(A)'      , &!
+                iostat = iostat     , &!
+                iomsg  = iomsg        &!
+            ) &!
+            STR_HEADER
+
+            if (iostat .ne. IOSTAT_OK) return
+
+
+
+            write( &!
+                unit   = write_unit             , &!
+                fmt    = '(I0,".",I0,2(1X,I0))' , &!
+                iostat = iostat                 , &!
+                iomsg  = iomsg                    &!
+            ) &!
+            mesh_format%version%get_major()      , &!
+            mesh_format%version%get_minor()      , &!
+            mesh_format%file_type%get_as_int32() , &!
+            mesh_format%get_data_size()
+
+            if (iostat .ne. IOSTAT_OK) return
+
+
+
+            write( &!
+                unit   = write_unit , &!
+                fmt    = '(A)'      , &!
+                iostat = iostat     , &!
+                iomsg  = iomsg        &!
+            ) &!
+            STR_FOOTER
 
         end associate
 
@@ -999,6 +1214,9 @@ submodule (gmsh_reader_interface) physical_names_implementation
 
     implicit none
 
+    character(len=*), parameter :: STR_FOOTER = '$EndPhysicalNames'
+    character(len=*), parameter :: STR_HEADER = '$PhysicalNames'
+
     contains
 
 
@@ -1116,7 +1334,7 @@ submodule (gmsh_reader_interface) physical_names_implementation
 
 
     module procedure is_header_ascii_physical_names
-        is_header = ( trim(text_line) .eq. '$PhysicalNames')
+        is_header = ( trim(text_line) .eq. STR_HEADER )
     end procedure
 
 
@@ -1204,6 +1422,78 @@ submodule (gmsh_reader_interface) physical_names_implementation
                 end if
 
             end do
+
+        end associate
+
+    end procedure
+
+
+
+    module procedure write_section_ascii_physical_names
+
+        integer(INT32) :: iter_item
+        !! A local support variable for this PROCEDURE
+
+
+
+        associate( physical_names => data_section )
+
+            if ( physical_names%get_num_physical_names() .lt. 1 ) then
+                iostat = IOSTAT_OK
+                return
+            end if
+
+
+
+            write( &!
+                unit   = write_unit , &!
+                fmt    = '(A)'      , &!
+                iostat = iostat     , &!
+                iomsg  = iomsg        &!
+            ) &!
+            STR_HEADER
+
+            if (iostat .ne. IOSTAT_OK) return
+
+
+
+            write( &!
+                unit   = write_unit , &!
+                fmt    = '(I0)'     , &!
+                iostat = iostat     , &!
+                iomsg  = iomsg        &!
+            ) &!
+            physical_names%get_num_physical_names()
+
+            if (iostat .ne. IOSTAT_OK) return
+
+
+
+            do iter_item = 1, physical_names%get_num_physical_names()
+
+                write( &!
+                    unit   = write_unit               , &!
+                    fmt    = '(2(I0,1X),"""",A,"""")' , &!
+                    iostat = iostat                   , &!
+                    iomsg  = iomsg                      &!
+                ) &!
+                &     physical_names%get_physical_dimension (iter_item)   , &!
+                &     physical_names%get_num_physical_tag   (iter_item)   , &!
+                trim( physical_names%get_num_physical_name  (iter_item) )
+
+                if (iostat .ne. IOSTAT_OK) return
+
+            end do
+
+
+
+            write( &!
+                unit   = write_unit , &!
+                fmt    = '(A)'      , &!
+                iostat = iostat     , &!
+                iomsg  = iomsg        &!
+            ) &!
+            STR_FOOTER
 
         end associate
 
