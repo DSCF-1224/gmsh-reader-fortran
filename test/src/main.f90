@@ -6,9 +6,9 @@ program test
     implicit none
 
     call run_test('t1-bin.msh2')
-    call run_test('t1-bin.msh4')
+!   call run_test('t1-bin.msh4')
     call run_test('t1-txt.msh2')
-    call run_test('t1-txt.msh4')
+!   call run_test('t1-txt.msh4')
 
 
 
@@ -43,7 +43,7 @@ program test
         character(len=len(file_name)) :: file_name_ref
         !! A local variable for this SUBROUTINE
 
-        type(gmsh_msh_file_t) :: msh_file
+        type(gmsh_msh2_file_t) :: msh_file
         !! A local variable for this SUBROUTINE
 
 

@@ -7,7 +7,7 @@ module gmsh_reader_interface
 
 
     private
-    public  :: gmsh_msh_file_t
+    public  :: gmsh_msh2_file_t
 
 
 
@@ -193,7 +193,7 @@ module gmsh_reader_interface
 
 
 
-    type :: gmsh_msh_file_t
+    type, abstract :: gmsh_msh_file_t
 
         integer, private :: stat
         !! Receive the `IOSTAT`/`STAT` value
@@ -211,9 +211,20 @@ module gmsh_reader_interface
 
         procedure, pass, public  :: read_file
         procedure, pass, private :: read_file_fore
-        procedure, pass, private :: read_file_rear
         procedure, pass, public  :: write_file
         procedure, pass, private :: write_file_main
+
+        procedure( read_file_rear_ascii_abstract ), pass, deferred, private :: read_file_rear_ascii
+
+    end type
+
+
+
+    type, extends(gmsh_msh_file_t) :: gmsh_msh2_file_t
+
+        contains
+
+        procedure, pass, private :: read_file_rear_ascii => read_msh2_file_rear_ascii
 
     end type
 
@@ -454,7 +465,7 @@ module gmsh_reader_interface
 
 
 
-        module subroutine read_file_rear(gmsh_msh_file, read_unit, stat, msg)
+        module subroutine read_file_rear_ascii_abstract(gmsh_msh_file, read_unit, stat, msg)
 
             class(gmsh_msh_file_t), intent(inout) :: gmsh_msh_file
             !! A dummy argument for this SUBROUTINE
@@ -505,6 +516,29 @@ module gmsh_reader_interface
             !! A dummy argument for this SUBROUTINE
 
             character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+    end interface
+
+
+
+    interface ! for `gmsh_msh2_file_t
+
+        module subroutine read_msh2_file_rear_ascii(gmsh_msh_file, read_unit, stat, msg)
+
+            class(gmsh_msh2_file_t), intent(inout) :: gmsh_msh_file
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: read_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: msg
             !! A dummy argument for this SUBROUTINE
 
         end subroutine
@@ -1043,7 +1077,7 @@ submodule (gmsh_reader_interface) gmsh_msh_file_implementation
 
 
 
-        call gmsh_msh_file%read_file_rear( &!
+        call gmsh_msh_file%read_file_rear_ascii( &!
             read_unit = read_unit , &!
             stat      = stat      , &!
             msg       = msg         &!
@@ -1095,11 +1129,6 @@ submodule (gmsh_reader_interface) gmsh_msh_file_implementation
             msg       = msg                       &!
         )
 
-    end procedure
-
-
-
-    module procedure read_file_rear
     end procedure
 
 
@@ -1166,6 +1195,21 @@ submodule (gmsh_reader_interface) gmsh_msh_file_implementation
             iomsg      = iomsg        &!
         )
 
+    end procedure
+
+end submodule
+
+
+
+submodule (gmsh_reader_interface) gmsh_msh2_file_implementation
+
+    implicit none
+
+    contains
+
+
+
+    module procedure read_msh2_file_rear_ascii
     end procedure
 
 end submodule
