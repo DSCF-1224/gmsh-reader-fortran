@@ -50,6 +50,10 @@ module gmsh_reader_interface
 
 
 
+    real(REAL64), parameter, private :: QUIET_NAN = transfer(source=-1_REAL64, mold=0.0_REAL64)
+
+
+
     type :: mesh_version_t
     !! $MeshFormat\version
     !! written as ASCII `double`
@@ -220,6 +224,30 @@ module gmsh_reader_interface
 
 
 
+    type :: coordinate_t
+
+        real(REAL64), private :: x = QUIET_NAN
+        !! (version 2) $Nodes\x-coord
+        !! (version 4) $Nodes\x
+
+        real(REAL64), private :: y = QUIET_NAN
+        !! (version 2) $Nodes\y-coord
+        !! (version 4) $Nodes\y
+
+        real(REAL64), private :: z = QUIET_NAN
+        !! (version 2) $Nodes\z-coord
+        !! (version 4) $Nodes\z
+
+        contains
+
+        procedure, pass, private :: get_coordinate_x
+        procedure, pass, private :: get_coordinate_y
+        procedure, pass, private :: get_coordinate_z
+
+    end type
+
+
+
     type, extends(gmsh_msh_file_t) :: gmsh_msh2_file_t
 
         contains
@@ -259,6 +287,46 @@ module gmsh_reader_interface
             !! A dummy argument for this SUBROUTINE
 
         end subroutine
+
+    end interface
+
+
+
+    interface ! for `coordinate_t`
+
+        module pure elemental function get_coordinate_x(coordinate) result(x)
+
+            class(coordinate_t), intent(in) :: coordinate
+            !! A dummy argument for this FUNCTION
+
+            real(REAL64) :: x
+            !! The return value of this FUNCTION
+
+        end function
+
+
+
+        module pure elemental function get_coordinate_y(coordinate) result(y)
+
+            class(coordinate_t), intent(in) :: coordinate
+            !! A dummy argument for this FUNCTION
+
+            real(REAL64) :: y
+            !! The return value of this FUNCTION
+
+        end function
+
+
+
+        module pure elemental function get_coordinate_z(coordinate) result(z)
+
+            class(coordinate_t), intent(in) :: coordinate
+            !! A dummy argument for this FUNCTION
+
+            real(REAL64) :: z
+            !! The return value of this FUNCTION
+
+        end function
 
     end interface
 
@@ -962,6 +1030,22 @@ module gmsh_reader_interface
     end interface
 
 end module
+
+
+
+submodule (gmsh_reader_interface) coordinate_implementation
+
+    implicit none
+
+    contains
+
+
+
+    module procedure get_coordinate_x; x = coordinate%x; end procedure
+    module procedure get_coordinate_y; y = coordinate%y; end procedure
+    module procedure get_coordinate_z; z = coordinate%z; end procedure
+
+end submodule
 
 
 
