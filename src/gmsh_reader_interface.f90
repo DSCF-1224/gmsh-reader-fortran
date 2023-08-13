@@ -103,11 +103,15 @@ module gmsh_reader_interface
 
         contains
 
-        procedure, pass, private :: find_header_ascii
+        procedure,   pass, private :: find_header_ascii
+        procedure, nopass, private :: write_section_header_ascii_core
+        procedure,   pass, private :: write_section_ascii
 
-        procedure( is_header_ascii_abstract     ), nopass, deferred, private :: is_header_ascii
-        procedure( read_section_ascii_abstract  ),   pass, deferred, private :: read_section_ascii
-        procedure( write_section_ascii_abstract ),   pass, deferred, public  :: write_section_ascii
+        procedure( is_header_ascii_abstract            ), nopass, deferred, private :: is_header_ascii
+        procedure( read_section_ascii_abstract         ),   pass, deferred, private :: read_section_ascii
+        procedure( write_section_footer_ascii_abstract ),   pass, deferred, private :: write_section_footer_ascii
+        procedure( write_section_header_ascii_abstract ),   pass, deferred, private :: write_section_header_ascii
+        procedure( write_section_main_ascii_abstract   ),   pass, deferred, private :: write_section_main_ascii
 
     end type
 
@@ -143,9 +147,11 @@ module gmsh_reader_interface
         contains
 
         procedure,   pass, public  :: get_data_size
-        procedure, nopass, private :: is_header_ascii     => is_header_ascii_mesh_format
-        procedure,   pass, private :: read_section_ascii  => read_section_ascii_mesh_format
-        procedure,   pass, public  :: write_section_ascii => write_section_ascii_mesh_format
+        procedure, nopass, private :: is_header_ascii            => is_header_ascii_mesh_format
+        procedure,   pass, private :: read_section_ascii         => read_section_ascii_mesh_format
+        procedure,   pass, private :: write_section_footer_ascii => write_section_footer_ascii_mesh_format
+        procedure,   pass, private :: write_section_header_ascii => write_section_header_ascii_mesh_format
+        procedure,   pass, private :: write_section_main_ascii   => write_section_main_ascii_mesh_format
 
     end type
 
@@ -171,15 +177,17 @@ module gmsh_reader_interface
 
         contains
 
-        procedure,   pass, private :: allocate_field          => allocate_field_physical_names
-        procedure,   pass, private :: deallocate_field        => deallocate_field_physical_names
+        procedure,   pass, private :: allocate_field             => allocate_field_physical_names
+        procedure,   pass, private :: deallocate_field           => deallocate_field_physical_names
         procedure,   pass, public  :: get_physical_dimension
         procedure,   pass, public  :: get_num_physical_name
         procedure,   pass, public  :: get_num_physical_names
         procedure,   pass, public  :: get_num_physical_tag
-        procedure, nopass, private :: is_header_ascii         => is_header_ascii_physical_names
-        procedure,   pass, private :: read_section_ascii      => read_section_ascii_physical_names
-        procedure,   pass, public  :: write_section_ascii     => write_section_ascii_physical_names
+        procedure, nopass, private :: is_header_ascii            => is_header_ascii_physical_names
+        procedure,   pass, private :: read_section_ascii         => read_section_ascii_physical_names
+        procedure,   pass, private :: write_section_footer_ascii => write_section_footer_ascii_physical_names
+        procedure,   pass, private :: write_section_header_ascii => write_section_header_ascii_physical_names
+        procedure,   pass, private :: write_section_main_ascii   => write_section_main_ascii_physical_names
 
     end type
 
@@ -306,7 +314,84 @@ module gmsh_reader_interface
 
 
 
-        module subroutine write_section_ascii_abstract(data_section, write_unit, iostat, iomsg)
+        module subroutine write_section_ascii(data_section, write_unit, iostat, iomsg)
+
+            class(data_section_t), intent(in) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine write_section_footer_ascii_abstract(data_section, write_unit, iostat, iomsg)
+
+            class(data_section_t), intent(in) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine write_section_header_ascii_abstract(data_section, write_unit, iostat, iomsg)
+
+            class(data_section_t), intent(in) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine write_section_header_ascii_core(write_unit, header, iostat, iomsg)
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            character(len=*), intent(in) :: header
+            !! A dummy argument for this SUBROUTINE
+            !! The header (string) to write
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine write_section_main_ascii_abstract(data_section, write_unit, iostat, iomsg)
 
             class(data_section_t), intent(in) :: data_section
             !! A dummy argument for this SUBROUTINE
@@ -478,7 +563,45 @@ module gmsh_reader_interface
 
 
 
-        module subroutine write_section_ascii_mesh_format(data_section, write_unit, iostat, iomsg)
+        module subroutine write_section_footer_ascii_mesh_format(data_section, write_unit, iostat, iomsg)
+
+            class(mesh_format_t), intent(in) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine write_section_header_ascii_mesh_format(data_section, write_unit, iostat, iomsg)
+
+            class(mesh_format_t), intent(in) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine write_section_main_ascii_mesh_format(data_section, write_unit, iostat, iomsg)
 
             class(mesh_format_t), intent(in) :: data_section
             !! A dummy argument for this SUBROUTINE
@@ -747,7 +870,45 @@ module gmsh_reader_interface
 
 
 
-        module subroutine write_section_ascii_physical_names(data_section, write_unit, iostat, iomsg)
+        module subroutine write_section_header_ascii_physical_names(data_section, write_unit, iostat, iomsg)
+
+            class(physical_names_t), intent(in) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine write_section_footer_ascii_physical_names(data_section, write_unit, iostat, iomsg)
+
+            class(physical_names_t), intent(in) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine write_section_main_ascii_physical_names(data_section, write_unit, iostat, iomsg)
 
             class(physical_names_t), intent(in) :: data_section
             !! A dummy argument for this SUBROUTINE
@@ -799,6 +960,52 @@ submodule (gmsh_reader_interface) data_section_implementation
             end if
 
         end do
+
+    end procedure
+
+
+
+    module procedure write_section_header_ascii_core
+
+        write( &!
+            unit   = write_unit , &!
+            fmt    = '(A)'      , &!
+            iostat = iostat     , &!
+            iomsg  = iomsg        &!
+        ) &!
+        header
+
+    end procedure
+
+
+
+    module procedure write_section_ascii
+
+        call data_section%write_section_header_ascii( &!
+            write_unit = write_unit , &!
+            iostat     = iostat     , &!
+            iomsg      = iomsg        &!
+        )
+
+        if (iostat .ne. IOSTAT_OK) return
+
+
+
+        call data_section%write_section_main_ascii( &!
+            write_unit = write_unit , &!
+            iostat     = iostat     , &!
+            iomsg      = iomsg        &!
+        )
+
+        if (iostat .ne. IOSTAT_OK) return
+
+
+
+        call data_section%write_section_footer_ascii( &!
+            write_unit = write_unit , &!
+            iostat     = iostat     , &!
+            iomsg      = iomsg        &!
+        )
 
     end procedure
 
@@ -1067,21 +1274,35 @@ submodule (gmsh_reader_interface) mesh_format_implementation
 
 
 
-    module procedure write_section_ascii_mesh_format
+    module procedure write_section_footer_ascii_mesh_format
+
+        call data_section%write_section_header_ascii_core( &!
+            write_unit = write_unit , &!
+            header     = STR_FOOTER , &!
+            iostat     = iostat     , &!
+            iomsg      = iomsg        &!
+        )
+
+    end procedure
+
+
+
+    module procedure write_section_header_ascii_mesh_format
+
+        call data_section%write_section_header_ascii_core( &!
+            write_unit = write_unit , &!
+            header     = STR_HEADER , &!
+            iostat     = iostat     , &!
+            iomsg      = iomsg        &!
+        )
+
+    end procedure
+
+
+
+    module procedure write_section_main_ascii_mesh_format
 
         associate( mesh_format => data_section )
-
-            write( &!
-                unit   = write_unit , &!
-                fmt    = '(A)'      , &!
-                iostat = iostat     , &!
-                iomsg  = iomsg        &!
-            ) &!
-            STR_HEADER
-
-            if (iostat .ne. IOSTAT_OK) return
-
-
 
             write( &!
                 unit   = write_unit             , &!
@@ -1093,18 +1314,6 @@ submodule (gmsh_reader_interface) mesh_format_implementation
             mesh_format%version%get_minor()                 , &!
             mesh_format%file_type%get_ascii_mode_as_int32() , &!
             mesh_format%get_data_size()
-
-            if (iostat .ne. IOSTAT_OK) return
-
-
-
-            write( &!
-                unit   = write_unit , &!
-                fmt    = '(A)'      , &!
-                iostat = iostat     , &!
-                iomsg  = iomsg        &!
-            ) &!
-            STR_FOOTER
 
         end associate
 
@@ -1464,7 +1673,72 @@ submodule (gmsh_reader_interface) physical_names_implementation
 
 
 
-    module procedure write_section_ascii_physical_names
+    module procedure write_section_footer_ascii_physical_names
+
+        logical :: flag_termination
+        !! A local variable for this SUBROUTINE
+
+
+
+        associate( physical_names => data_section )
+
+            call check_num_physical_names( &!
+                num_physical_names = physical_names%get_num_physical_names() , &!
+                flag_termination   = flag_termination                          &!
+            )
+
+            if (flag_termination) return
+
+
+
+            call physical_names%write_section_header_ascii_core( &!
+                write_unit = write_unit , &!
+                header     = STR_FOOTER , &!
+                iostat     = iostat     , &!
+                iomsg      = iomsg        &!
+            )
+
+        end associate
+
+    end procedure
+
+
+
+    module procedure write_section_header_ascii_physical_names
+
+        logical :: flag_termination
+        !! A local variable for this SUBROUTINE
+
+
+
+        associate( physical_names => data_section )
+
+            call check_num_physical_names( &!
+                num_physical_names = physical_names%get_num_physical_names() , &!
+                flag_termination   = flag_termination                          &!
+            )
+
+            if (flag_termination) return
+
+
+
+            call physical_names%write_section_header_ascii_core( &!
+                write_unit = write_unit , &!
+                header     = STR_HEADER , &!
+                iostat     = iostat     , &!
+                iomsg      = iomsg        &!
+            )
+
+        end associate
+
+    end procedure
+
+
+
+    module procedure write_section_main_ascii_physical_names
+
+        logical :: flag_termination
+        !! A local variable for this SUBROUTINE
 
         integer(INT32) :: iter_item
         !! A local support variable for this PROCEDURE
@@ -1473,22 +1747,12 @@ submodule (gmsh_reader_interface) physical_names_implementation
 
         associate( physical_names => data_section )
 
-            if ( physical_names%get_num_physical_names() .lt. 1 ) then
-                iostat = IOSTAT_OK
-                return
-            end if
+            call check_num_physical_names( &!
+                num_physical_names = physical_names%get_num_physical_names() , &!
+                flag_termination   = flag_termination                          &!
+            )
 
-
-
-            write( &!
-                unit   = write_unit , &!
-                fmt    = '(A)'      , &!
-                iostat = iostat     , &!
-                iomsg  = iomsg        &!
-            ) &!
-            STR_HEADER
-
-            if (iostat .ne. IOSTAT_OK) return
+            if (flag_termination) return
 
 
 
@@ -1520,18 +1784,24 @@ submodule (gmsh_reader_interface) physical_names_implementation
 
             end do
 
-
-
-            write( &!
-                unit   = write_unit , &!
-                fmt    = '(A)'      , &!
-                iostat = iostat     , &!
-                iomsg  = iomsg        &!
-            ) &!
-            STR_FOOTER
-
         end associate
 
     end procedure
+
+
+
+    subroutine check_num_physical_names(num_physical_names, flag_termination)
+
+        integer(INT32), intent(in) :: num_physical_names
+        !! A dummy argument for this SUBROUTINE
+
+        logical, intent(out) :: flag_termination
+        !! A dummy argument for this SUBROUTINE
+
+
+
+        flag_termination =(num_physical_names .lt. 1_INT32)
+
+    end subroutine
 
 end submodule
