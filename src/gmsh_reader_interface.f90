@@ -243,10 +243,12 @@ module gmsh_reader_interface
         procedure, pass, private :: get_coordinate_x
         procedure, pass, private :: get_coordinate_y
         procedure, pass, private :: get_coordinate_z
+        procedure, pass, private :: reset_coordinate
 
         generic, public :: get_x => get_coordinate_x
         generic, public :: get_y => get_coordinate_y
         generic, public :: get_z => get_coordinate_z
+        generic, public :: reset => reset_coordinate
 
     end type
 
@@ -331,6 +333,15 @@ module gmsh_reader_interface
             !! The return value of this FUNCTION
 
         end function
+
+
+
+        module elemental subroutine reset_coordinate(coordinate)
+
+            class(coordinate_t), intent(inout) :: coordinate
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
 
     end interface
 
@@ -1048,6 +1059,14 @@ submodule (gmsh_reader_interface) coordinate_implementation
     module procedure get_coordinate_x; x = coordinate%x; end procedure
     module procedure get_coordinate_y; y = coordinate%y; end procedure
     module procedure get_coordinate_z; z = coordinate%z; end procedure
+
+
+
+    module procedure reset_coordinate
+        coordinate%x = QUIET_NAN
+        coordinate%y = QUIET_NAN
+        coordinate%z = QUIET_NAN
+    end procedure
 
 end submodule
 
