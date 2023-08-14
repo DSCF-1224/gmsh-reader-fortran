@@ -215,10 +215,11 @@ module gmsh_reader_interface
 
         procedure, pass, public  :: read_file
         procedure, pass, private :: read_file_fore
-        procedure, pass, public  :: write_file
-        procedure, pass, private :: write_file_main
+        procedure, pass, public  :: write_file_ascii
+        procedure, pass, private :: write_file_fore_ascii
 
-        procedure( read_file_rear_ascii_abstract ), pass, deferred, private :: read_file_rear_ascii
+        procedure( read_file_rear_ascii_abstract  ), pass, deferred, private :: read_file_rear_ascii
+        procedure( write_file_rear_ascii_abstract ), pass, deferred, private :: write_file_rear_ascii
 
     end type
 
@@ -258,7 +259,8 @@ module gmsh_reader_interface
 
         contains
 
-        procedure, pass, private :: read_file_rear_ascii => read_msh2_file_rear_ascii
+        procedure, pass, private :: read_file_rear_ascii  => read_msh2_file_rear_ascii
+        procedure, pass, private :: write_file_rear_ascii => write_msh2_file_rear_ascii
 
     end type
 
@@ -567,7 +569,7 @@ module gmsh_reader_interface
 
 
 
-        module subroutine write_file(gmsh_msh_file, file_path, iostat, iomsg)
+        module subroutine write_file_ascii(gmsh_msh_file, file_path, iostat, iomsg)
 
             class(gmsh_msh_file_t), intent(in) :: gmsh_msh_file
             !! A dummy argument for this SUBROUTINE
@@ -586,7 +588,26 @@ module gmsh_reader_interface
 
 
 
-        module subroutine write_file_main(gmsh_msh_file, write_unit, iostat, iomsg)
+        module subroutine write_file_fore_ascii(gmsh_msh_file, write_unit, iostat, iomsg)
+
+            class(gmsh_msh_file_t), intent(in) :: gmsh_msh_file
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to write the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine write_file_rear_ascii_abstract(gmsh_msh_file, write_unit, iostat, iomsg)
 
             class(gmsh_msh_file_t), intent(in) :: gmsh_msh_file
             !! A dummy argument for this SUBROUTINE
@@ -622,6 +643,25 @@ module gmsh_reader_interface
             !! A dummy argument for this SUBROUTINE
 
             character(len=*), intent(inout) :: msg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine write_msh2_file_rear_ascii(gmsh_msh_file, write_unit, iostat, iomsg)
+
+            class(gmsh_msh2_file_t), intent(in) :: gmsh_msh_file
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to write the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
             !! A dummy argument for this SUBROUTINE
 
         end subroutine
@@ -1240,7 +1280,7 @@ submodule (gmsh_reader_interface) gmsh_msh_file_implementation
 
 
 
-    module procedure write_file
+    module procedure write_file_ascii
 
         integer :: write_unit
         !! A local variable for this SUBROUTINE
@@ -1262,7 +1302,17 @@ submodule (gmsh_reader_interface) gmsh_msh_file_implementation
 
 
 
-        call gmsh_msh_file%write_file_main( &!
+        call gmsh_msh_file%write_file_fore_ascii( &!
+            write_unit = write_unit , &!
+            iostat     = iostat     , &!
+            iomsg      = iomsg        &!
+        )
+
+        if (iostat .ne. IOSTAT_OK) return
+
+
+
+        call gmsh_msh_file%write_file_rear_ascii( &!
             write_unit = write_unit , &!
             iostat     = iostat     , &!
             iomsg      = iomsg        &!
@@ -1282,7 +1332,7 @@ submodule (gmsh_reader_interface) gmsh_msh_file_implementation
 
 
 
-    module procedure write_file_main
+    module procedure write_file_fore_ascii
 
         call gmsh_msh_file%mesh_format%write_section_ascii( &!
             write_unit = write_unit , &!
@@ -1317,6 +1367,11 @@ submodule (gmsh_reader_interface) gmsh_msh2_file_implementation
 
 
     module procedure read_msh2_file_rear_ascii
+    end procedure
+
+
+
+    module procedure write_msh2_file_rear_ascii
     end procedure
 
 end submodule
