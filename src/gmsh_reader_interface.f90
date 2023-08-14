@@ -244,6 +244,10 @@ module gmsh_reader_interface
         procedure, pass, private :: get_coordinate_y
         procedure, pass, private :: get_coordinate_z
 
+        generic, public :: get_x => get_coordinate_x
+        generic, public :: get_y => get_coordinate_y
+        generic, public :: get_z => get_coordinate_z
+
     end type
 
 
