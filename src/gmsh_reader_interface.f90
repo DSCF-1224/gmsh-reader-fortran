@@ -1662,10 +1662,10 @@ submodule (gmsh_reader_interface) physical_names_implementation
 
             if ( allocated(physical_names%physical_dimension) ) then
 
-                allocate( &!
-                    physical_names%physical_dimension(physical_names%num_physical_names), &!
-                    stat   = stat   , &!
-                    errmsg = errmsg   &!
+                deallocate( &!
+                    physical_names%physical_dimension , &!
+                    stat   = stat                     , &!
+                    errmsg = errmsg                     &!
                 )
                 
                 if (stat .ne. STAT_OK) return
@@ -1676,10 +1676,10 @@ submodule (gmsh_reader_interface) physical_names_implementation
 
             if ( allocated(physical_names%physical_tag) ) then
 
-                allocate( &!
-                    physical_names%physical_tag(physical_names%num_physical_names), &!
-                    stat   = stat   , &!
-                    errmsg = errmsg   &!
+                deallocate( &!
+                    physical_names%physical_tag , &!
+                    stat   = stat               , &!
+                    errmsg = errmsg               &!
                 )
                 
                 if (stat .ne. STAT_OK) return
@@ -1690,10 +1690,10 @@ submodule (gmsh_reader_interface) physical_names_implementation
 
             if ( allocated(physical_names%physical_name) ) then
 
-                allocate( &!
-                    physical_names%physical_name(physical_names%num_physical_names), &!
-                    stat   = stat   , &!
-                    errmsg = errmsg   &!
+                deallocate( &!
+                    physical_names%physical_name , &!
+                    stat   = stat                , &!
+                    errmsg = errmsg                &!
                 )
 
             end if
