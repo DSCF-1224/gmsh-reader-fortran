@@ -15,7 +15,7 @@ module gmsh_reader_interface
     !! $MeshFormat\data-size
     !! written as ASCII `int`
 
-    integer(INT32), parameter, private :: DEFAULT_MSH_FILE_MODE = -1
+    integer(INT32), parameter, private :: DEFAULT_MSH_FILE_MODE_AS_INT32 = -1
     !! $MeshFormat\file-type
     !! written as ASCII `int`
     !! 0 for ASCII mode
@@ -41,12 +41,22 @@ module gmsh_reader_interface
     !! $Nodes\numNodes
 
     integer(INT32), parameter, private :: DEFAULT_NUM_PHYSICAL_NAMES = -1
-    !! $PhysicalNames\numPhysicalNames
+    !! (version 2) $$PhysicalNames\number-of-names
+    !! (version 4) $$PhysicalNames\numPhysicalNames
+
+    integer(INT32), parameter, private :: DEFAULT_PHYSICAL_DIMENSION = -1
+    !! (version 2) $PhysicalNames\physical-dimension
+    !! (version 4) $PhysicalNames\dimension
+
+    integer(INT32), parameter, private :: DEFAULT_PHYSICAL_TAG = -1
+    !! (version 2) $PhysicalNames\physical-tag
+    !! (version 4) $PhysicalNames\physicalTag
 
     integer, parameter, private :: IOSTAT_OK = 0
 
     integer, parameter, private :: LEN_PHYSICAL_NAME = 127
-    !! $PhysicalNames\numPhysicalNames
+    !! (version 2) $PhysicalNames\physical-name
+    !! (version 4) $PhysicalNames\names
 
     integer, parameter, private :: LEN_TEXT_LINE = 2048
     !! text line buffer length
@@ -64,6 +74,12 @@ module gmsh_reader_interface
 
 
     real(REAL64), parameter, private :: QUIET_NAN = transfer(source=-1_REAL64, mold=0.0_REAL64)
+
+
+
+    character(len=LEN_PHYSICAL_NAME), parameter, private :: DEFAULT_PHYSICAL_NAME = repeat(string= ' ', ncopies=LEN_PHYSICAL_NAME)
+    !! (version 2) $PhysicalNames\physical-name
+    !! (version 4) $PhysicalNames\names
 
 
 
@@ -88,13 +104,21 @@ module gmsh_reader_interface
 
 
 
+    type(mesh_version_t), parameter, private :: DEFAULT_MESH_VERSION = &!
+    &   mesh_version_t( &!
+    &       major = DEFAULT_MAJOR_VERSION , &!
+    &       minor = DEFAULT_MINOR_VERSION   &!
+    &   )
+
+
+
     type :: msh_file_mode_t
     !! $MeshFormat\file-type
     !! written as ASCII `int`
     !! 0 for ASCII mode
     !! 1 for binary mode
 
-        integer(INT32), private :: value = DEFAULT_MSH_FILE_MODE
+        integer(INT32), private :: value = DEFAULT_MSH_FILE_MODE_AS_INT32
 
         contains
         
@@ -116,6 +140,11 @@ module gmsh_reader_interface
 
 
 
+    type(msh_file_mode_t), parameter, private :: DEFAULT_MSH_FILE_MODE = &!
+    &   msh_file_mode_t(DEFAULT_MSH_FILE_MODE_AS_INT32)
+
+
+
     type, abstract :: data_section_t
 
         contains
@@ -126,6 +155,7 @@ module gmsh_reader_interface
 
         procedure( is_header_ascii_abstract            ), nopass, deferred, private :: is_header_ascii
         procedure( read_section_ascii_abstract         ),   pass, deferred, private :: read_section_ascii
+        procedure( reset_section_abstract              ),   pass, deferred, private :: reset_section
         procedure( write_section_footer_ascii_abstract ),   pass, deferred, private :: write_section_footer_ascii
         procedure( write_section_header_ascii_abstract ),   pass, deferred, private :: write_section_header_ascii
         procedure( write_section_main_ascii_abstract   ),   pass, deferred, private :: write_section_main_ascii
@@ -147,11 +177,11 @@ module gmsh_reader_interface
 
     type, extends(data_section_t) :: mesh_format_t
 
-        type(mesh_version_t), public :: version
+        type(mesh_version_t), public :: version = DEFAULT_MESH_VERSION
         !! $MeshFormat\version
         !! written as ASCII `double`
 
-        type(msh_file_mode_t), public :: file_type
+        type(msh_file_mode_t), public :: file_type = DEFAULT_MSH_FILE_MODE
         !! $MeshFormat\file-type
         !! written as ASCII `int`
         !! 0 for ASCII mode
@@ -166,6 +196,7 @@ module gmsh_reader_interface
         procedure,   pass, public  :: get_data_size
         procedure, nopass, private :: is_header_ascii            => is_header_ascii_mesh_format
         procedure,   pass, private :: read_section_ascii         => read_section_ascii_mesh_format
+        procedure,   pass, private :: reset_section              => reset_section_mesh_format
         procedure,   pass, private :: write_section_footer_ascii => write_section_footer_ascii_mesh_format
         procedure,   pass, private :: write_section_header_ascii => write_section_header_ascii_mesh_format
         procedure,   pass, private :: write_section_main_ascii   => write_section_main_ascii_mesh_format
@@ -174,22 +205,35 @@ module gmsh_reader_interface
 
 
 
+    type(mesh_format_t), parameter, private :: DEFAULT_MESH_FORMAT = &!
+    &   mesh_format_t( &!
+    &        version   = DEFAULT_MESH_VERSION  , &!
+    &        file_type = DEFAULT_MSH_FILE_MODE , &!
+    &        data_size = DEFAULT_DATA_SIZE       &!
+    &   )
+
+
+
     type, extends(allocatable_data_section_t) :: physical_names_t
 
         integer(INT32), private :: num_physical_names = DEFAULT_NUM_PHYSICAL_NAMES
-        !! $PhysicalNames\numPhysicalNames
+        !! (version 2) $$PhysicalNames\number-of-names
+        !! (version 4) $$PhysicalNames\numPhysicalNames
         !! written as ASCII `int`
 
         integer(INT32), dimension(:), allocatable, private :: physical_dimension
-        !! $PhysicalNames\dimension
+        !! (version 2) $PhysicalNames\physical-dimension
+        !! (version 4) $PhysicalNames\dimension
         !! written as ASCII `int`
 
         integer(INT32), dimension(:), allocatable, private :: physical_tag
-        !! $PhysicalNames\dimension
+        !! (version 2) $PhysicalNames\physical-tag
+        !! (version 4) $PhysicalNames\physicalTag
         !! written as ASCII `int`
 
         character(len=LEN_PHYSICAL_NAME), dimension(:), allocatable, private :: physical_name
-        !! $PhysicalNames\physicalNames
+        !! (version 2) $PhysicalNames\physical-name
+        !! (version 4) $PhysicalNames\names
         !! 127 characters max
 
         contains
@@ -202,6 +246,7 @@ module gmsh_reader_interface
         procedure,   pass, public  :: get_num_physical_tag
         procedure, nopass, private :: is_header_ascii            => is_header_ascii_physical_names
         procedure,   pass, private :: read_section_ascii         => read_section_ascii_physical_names
+        procedure,   pass, private :: reset_section              => reset_section_physical_names
         procedure,   pass, private :: write_section_footer_ascii => write_section_footer_ascii_physical_names
         procedure,   pass, private :: write_section_header_ascii => write_section_header_ascii_physical_names
         procedure,   pass, private :: write_section_main_ascii   => write_section_main_ascii_physical_names
@@ -218,7 +263,7 @@ module gmsh_reader_interface
         character(LEN_TEXT_LINE), private :: text_line
         !! Read text line buffer
 
-        type(mesh_format_t), public :: mesh_format
+        type(mesh_format_t), public :: mesh_format = DEFAULT_MESH_FORMAT
         !! Store the data from `$MeshFormat` section
 
         type(physical_names_t), public :: physical_names
@@ -299,7 +344,7 @@ module gmsh_reader_interface
 
     type, extends(allocatable_data_section_t), abstract :: nodes_abstract_t
 
-        integer(INT32), private :: num_nodes
+        integer(INT32), private :: num_nodes = DEFAULT_NUM_NODES
         !! (version 2)
         !! $Nodes\number-of-nodes
         !! the number of nodes in the mesh
@@ -335,6 +380,7 @@ module gmsh_reader_interface
         procedure, pass, private :: allocate_field           => allocate_field_nodes_version2
         procedure, pass, private :: deallocate_field         => deallocate_field_nodes_version2
         procedure, pass, private :: read_section_ascii       => read_section_ascii_nodes_version2
+        procedure, pass, private :: reset_section            => reset_section_nodes_version2
         procedure, pass, private :: write_section_main_ascii => write_section_main_ascii_nodes_version2
 
     end type
@@ -488,6 +534,21 @@ module gmsh_reader_interface
             character(len=LEN_TEXT_LINE), intent(inout) :: text_line
             !! A dummy argument for this SUBROUTINE
             !! Read text line buffer
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: msg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine reset_section_abstract(data_section, stat, msg)
+
+            class(data_section_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
 
             integer, intent(out) :: stat
             !! A dummy argument for this SUBROUTINE
@@ -805,6 +866,20 @@ module gmsh_reader_interface
             character(len=*), intent(inout) :: msg
             !! A dummy argument for this SUBROUTINE
 
+        end subroutine
+
+
+
+        module subroutine reset_section_mesh_format(data_section, stat, msg)
+
+            class(mesh_format_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: msg
+            !! A dummy argument for this SUBROUTINE
         end subroutine
 
 
@@ -1168,6 +1243,21 @@ module gmsh_reader_interface
 
 
 
+        module subroutine reset_section_nodes_version2(data_section, stat, msg)
+
+            class(nodes_version2_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: msg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
         module subroutine write_section_main_ascii_nodes_version2(data_section, write_unit, iostat, iomsg)
 
             class(nodes_version2_t), intent(in) :: data_section
@@ -1303,6 +1393,21 @@ module gmsh_reader_interface
             character(len=LEN_TEXT_LINE), intent(inout) :: text_line
             !! A dummy argument for this SUBROUTINE
             !! Read text line buffer
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: msg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine reset_section_physical_names(data_section, stat, msg)
+
+            class(physical_names_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
 
             integer, intent(out) :: stat
             !! A dummy argument for this SUBROUTINE
@@ -1788,6 +1893,23 @@ submodule (gmsh_reader_interface) mesh_format_implementation
 
 
 
+    module procedure reset_section_mesh_format
+
+        associate( mesh_format => data_section )
+
+            mesh_format%version   = DEFAULT_MESH_VERSION
+            mesh_format%file_type = DEFAULT_MSH_FILE_MODE
+            mesh_format%data_size = DEFAULT_DATA_SIZE
+
+        end associate
+
+        stat = STAT_OK
+        msg  = repeat(string=' ', ncopies=len(msg))
+
+    end procedure
+
+
+
     module procedure write_section_footer_ascii_mesh_format
 
         call data_section%write_section_header_ascii_core( &!
@@ -1858,8 +1980,8 @@ submodule (gmsh_reader_interface) mesh_version_implementation
 
 
     module procedure reset_mesh_version
-        mesh_version%major = DEFAULT_MAJOR_VERSION
-        mesh_version%minor = DEFAULT_MINOR_VERSION
+        mesh_version%major = DEFAULT_MESH_VERSION%get_major()
+        mesh_version%minor = DEFAULT_MESH_VERSION%get_minor()
     end procedure
 
 
@@ -1955,7 +2077,7 @@ submodule (gmsh_reader_interface) msh_file_mode_implementation
 
 
     module procedure reset_msh_file_mode
-        msh_file_mode%value = DEFAULT_MSH_FILE_MODE
+        msh_file_mode%value = DEFAULT_MSH_FILE_MODE%get_as_int32()
     end procedure
 
 
@@ -2224,6 +2346,22 @@ submodule (gmsh_reader_interface) nodes_version2_implementation
 
 
 
+    module procedure reset_section_nodes_version2
+
+        associate( nodes => data_section )
+
+            call nodes%deallocate_field(stat, msg)
+
+            if (stat .ne. STAT_OK) return
+
+            nodes%num_nodes = DEFAULT_NUM_NODES
+
+        end associate
+
+    end procedure
+
+
+
     module procedure write_section_main_ascii_nodes_version2
 
         logical :: flag_termination
@@ -2298,9 +2436,10 @@ submodule (gmsh_reader_interface) physical_names_implementation
         associate( physical_names => data_section )
 
             allocate( &!
-                physical_names%physical_dimension(physical_names%num_physical_names), &!
-                stat   = stat   , &!
-                errmsg = errmsg   &!
+                physical_names%physical_dimension( physical_names%get_num_physical_names() ) , &!
+                mold   = DEFAULT_PHYSICAL_DIMENSION , &!
+                stat   = stat                       , &!
+                errmsg = errmsg                       &!
             )
             
             if (stat .ne. STAT_OK) return
@@ -2308,9 +2447,10 @@ submodule (gmsh_reader_interface) physical_names_implementation
 
 
             allocate( &!
-                physical_names%physical_tag(physical_names%num_physical_names), &!
-                stat   = stat   , &!
-                errmsg = errmsg   &!
+                physical_names%physical_tag( physical_names%get_num_physical_names() ) , &!
+                mold   = DEFAULT_PHYSICAL_TAG , &!
+                stat   = stat                 , &!
+                errmsg = errmsg                 &!
             )
             
             if (stat .ne. STAT_OK) return
@@ -2318,9 +2458,10 @@ submodule (gmsh_reader_interface) physical_names_implementation
 
 
             allocate( &!
-                physical_names%physical_name(physical_names%num_physical_names), &!
-                stat   = stat   , &!
-                errmsg = errmsg   &!
+                physical_names%physical_name( physical_names%get_num_physical_names() ) , &!
+                mold   = DEFAULT_PHYSICAL_NAME , &!
+                stat   = stat                  , &!
+                errmsg = errmsg                  &!
             )
 
         end associate
@@ -2494,6 +2635,22 @@ submodule (gmsh_reader_interface) physical_names_implementation
                 end if
 
             end do
+
+        end associate
+
+    end procedure
+
+
+
+    module procedure reset_section_physical_names
+
+        associate( physical_names => data_section )
+
+            call physical_names%deallocate_field(stat, msg)
+
+            if (stat .ne. STAT_OK) return
+
+            physical_names%num_physical_names = DEFAULT_NUM_PHYSICAL_NAMES
 
         end associate
 
