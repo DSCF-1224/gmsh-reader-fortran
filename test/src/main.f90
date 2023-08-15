@@ -5,7 +5,7 @@ program test
 
     implicit none
 
-    call run_test('t1-bin.msh2')
+!   call run_test('t1-bin.msh2')
 !   call run_test('t1-bin.msh4')
     call run_test('t1-txt.msh2')
 !   call run_test('t1-txt.msh4')
@@ -58,7 +58,7 @@ program test
 
 
 
-        call msh_file%write_file( &!
+        call msh_file%write_file_ascii( &!
             file_path = result_folder_path // file_name , &!
             iostat    = stat                            , &!
             iomsg     = msg                               &!

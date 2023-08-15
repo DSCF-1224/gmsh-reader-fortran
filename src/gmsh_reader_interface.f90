@@ -27,6 +27,19 @@ module gmsh_reader_interface
     integer(INT32), parameter, private :: DEFAULT_MINOR_VERSION = -1
     !! $MeshFormat\version
 
+    integer(INT32), parameter, private :: DEFAULT_NODE_NUMBER = -1
+    !! (version 2) $Nodes\node-number
+    !! `node-number` is the number (index) of the n-th node in the mesh;
+    !! `node-number` must be a positive (non-zero) integer.
+
+    integer(INT32), parameter, private :: DEFAULT_NUM_NODES = -1
+    !! (version 2)
+    !! $Nodes\number-of-nodes
+    !! the number of nodes in the mesh
+    !! 
+    !! (version 4)
+    !! $Nodes\numNodes
+
     integer(INT32), parameter, private :: DEFAULT_NUM_PHYSICAL_NAMES = -1
     !! $PhysicalNames\numPhysicalNames
 
@@ -255,7 +268,83 @@ module gmsh_reader_interface
 
 
 
+    type(coordinate_t), parameter, private :: DEFAULT_COORDINATE = coordinate_t(QUIET_NAN, QUIET_NAN, QUIET_NAN)
+
+
+
+    type :: node_version2_t
+
+        integer(INT32), private :: node_number = DEFAULT_NODE_NUMBER
+        !! (version 2) $Nodes\node-number
+        !! `node-number` is the number (index) of the n-th node in the mesh;
+        !! `node-number` must be a positive (non-zero) integer.
+        !! Note that the node-numbers do not necessarily have to form a dense nor an ordered sequence.
+
+        type(coordinate_t), public :: coord = DEFAULT_COORDINATE
+        !! (version 2) $Nodes\x-coord
+        !! (version 2) $Nodes\y-coord
+        !! (version 2) $Nodes\z-coord
+        !! the floating point values giving the X, Y and Z coordinates of the n-th node
+
+        contains
+
+        procedure, pass, public  :: get_node_number
+        procedure, pass, private :: reset_node_version2
+
+        generic, private :: reset => reset_node_version2
+
+    end type
+
+
+
+    type, extends(allocatable_data_section_t), abstract :: nodes_abstract_t
+
+        integer(INT32), private :: num_nodes
+        !! (version 2)
+        !! $Nodes\number-of-nodes
+        !! the number of nodes in the mesh
+        !! 
+        !! (version 4)
+        !! $Nodes\numNodes
+
+        contains
+
+        procedure,   pass, private :: check_num_nodes_nodes_abstract
+        procedure,   pass, private :: get_num_nodes_nodes_abstract
+        procedure, nopass, private :: is_header_ascii                => is_header_ascii_nodes_abstract
+        procedure,   pass, private :: write_section_footer_ascii     => write_section_footer_ascii_nodes_abstract
+        procedure,   pass, private :: write_section_header_ascii     => write_section_header_ascii_nodes_abstract
+
+        generic, public :: check_num_nodes => check_num_nodes_nodes_abstract
+        generic, public :: get_num_nodes   => get_num_nodes_nodes_abstract
+
+    end type
+
+
+
+    type, extends(nodes_abstract_t) :: nodes_version2_t
+
+        type(node_version2_t), dimension(:), allocatable :: node
+        !! (version 2) $Nodes\node-number
+        !! (version 2) $Nodes\x-coord
+        !! (version 2) $Nodes\y-coord
+        !! (version 2) $Nodes\z-coord
+
+        contains
+
+        procedure, pass, private :: allocate_field           => allocate_field_nodes_version2
+        procedure, pass, private :: deallocate_field         => deallocate_field_nodes_version2
+        procedure, pass, private :: read_section_ascii       => read_section_ascii_nodes_version2
+        procedure, pass, private :: write_section_main_ascii => write_section_main_ascii_nodes_version2
+
+    end type
+
+
+
     type, extends(gmsh_msh_file_t) :: gmsh_msh2_file_t
+
+        type(nodes_version2_t), public :: nodes
+        !! Store the data from `$Nodes` section
 
         contains
 
@@ -902,6 +991,204 @@ module gmsh_reader_interface
 
 
 
+    interface ! `for `node_version2_t`
+
+        module pure elemental function get_node_number(node) result(node_number)
+
+            class(node_version2_t), intent(in) :: node
+            !! A dummy argument for this FUNCTION
+
+            integer(INT32) :: node_number
+            !! The return value of this FUNCTION
+
+        end function
+
+
+        module elemental subroutine reset_node_version2(node)
+
+            class(node_version2_t), intent(inout) :: node
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+    end interface
+
+
+
+    interface ! `for `nodes_abstract_t`
+
+        module elemental subroutine check_num_nodes_nodes_abstract(nodes, flag_termination)
+
+            class(nodes_abstract_t), intent(in) :: nodes
+            !! A dummy argument for this SUBROUTINE
+
+            logical, intent(out) :: flag_termination
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module pure elemental function get_num_nodes_nodes_abstract(nodes) result(num_nodes)
+
+            class(nodes_abstract_t), intent(in) :: nodes
+            !! A dummy argument for this FUNCTION
+
+            integer(INT32) :: num_nodes
+            !! The return value of this FUNCTION
+
+        end function
+
+
+
+        module pure elemental function is_header_ascii_nodes_abstract(text_line) result(is_header)
+
+            character(len=LEN_TEXT_LINE), intent(in) :: text_line
+            !! A dummy argument for this FUNCTION
+            !! Read text line buffer
+
+            logical :: is_header
+            !! The return value of this FUNCTION
+
+        end function
+
+
+
+        module subroutine write_section_header_ascii_nodes_abstract(data_section, write_unit, iostat, iomsg)
+
+            class(nodes_abstract_t), intent(in) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine write_section_footer_ascii_nodes_abstract(data_section, write_unit, iostat, iomsg)
+
+            class(nodes_abstract_t), intent(in) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine write_section_main_ascii_nodes_abstract(data_section, write_unit, iostat, iomsg)
+
+            class(nodes_abstract_t), intent(in) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+    end interface
+
+
+
+    interface ! `for `nodes_version2_t`
+
+        module subroutine allocate_field_nodes_version2(data_section, stat, errmsg)
+
+            class(nodes_version2_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: errmsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine deallocate_field_nodes_version2(data_section, stat, errmsg)
+
+            class(nodes_version2_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: errmsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine read_section_ascii_nodes_version2(data_section, read_unit, text_line, stat, msg)
+
+            class(nodes_version2_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: read_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            character(len=LEN_TEXT_LINE), intent(inout) :: text_line
+            !! A dummy argument for this SUBROUTINE
+            !! Read text line buffer
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: msg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine write_section_main_ascii_nodes_version2(data_section, write_unit, iostat, iomsg)
+
+            class(nodes_version2_t), intent(in) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: write_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            integer, intent(out) :: iostat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: iomsg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+    end interface
+
+
+
     interface ! for `physical_names_t`
 
         module pure elemental function get_physical_dimension(physical_names, index) result(physical_dimension)
@@ -1218,8 +1505,9 @@ submodule (gmsh_reader_interface) gmsh_msh_file_implementation
         )
 
         select case (stat)
-            case (IOSTAT_END) ; ! NOTHING TO DO HERE
-            case default      ; return
+            case ( IOSTAT_OK  ) ; ! NOTHING TO DO HERE
+            case ( IOSTAT_END ) ; ! NOTHING TO DO HERE
+            case default        ; return
         end select
 
 
@@ -1229,6 +1517,11 @@ submodule (gmsh_reader_interface) gmsh_msh_file_implementation
             stat      = stat      , &!
             msg       = msg         &!
         )
+
+        select case (stat)
+            case (IOSTAT_OK) ; ! NOTHING TO DO HERE
+            case default     ; return
+        end select
 
 
 
@@ -1367,11 +1660,26 @@ submodule (gmsh_reader_interface) gmsh_msh2_file_implementation
 
 
     module procedure read_msh2_file_rear_ascii
+
+        call gmsh_msh_file%nodes%read_section_ascii( &!
+            read_unit = read_unit               , &!
+            text_line = gmsh_msh_file%text_line , &!
+            stat      = stat                    , &!
+            msg       = msg                       &!
+        )
+
     end procedure
 
 
 
     module procedure write_msh2_file_rear_ascii
+
+        call gmsh_msh_file%nodes%write_section_ascii( &!
+            write_unit = write_unit , &!
+            iostat     = iostat     , &!
+            iomsg      = iomsg        &!
+        )
+
     end procedure
 
 end submodule
@@ -1654,6 +1962,320 @@ submodule (gmsh_reader_interface) msh_file_mode_implementation
 
     module procedure setup_msh_file_mode
         msh_file_mode%value = source
+    end procedure
+
+end submodule
+
+
+
+submodule (gmsh_reader_interface) node_version2_implementation
+
+    implicit none
+
+    contains
+
+
+
+    module procedure get_node_number
+        node_number = node%node_number
+    end procedure
+
+
+
+    module procedure reset_node_version2
+        node%node_number = DEFAULT_NODE_NUMBER
+        call node%coord%reset()
+    end procedure
+
+end submodule
+
+
+
+submodule (gmsh_reader_interface) nodes_abstract_implementation
+
+    implicit none
+
+    character(len=*), parameter :: STR_FOOTER = '$EndNodes'
+    character(len=*), parameter :: STR_HEADER = '$Nodes'
+
+    contains
+
+
+
+    module procedure check_num_nodes_nodes_abstract
+
+        flag_termination =(nodes%get_num_nodes() .lt. 1_INT32)
+
+    end procedure
+
+
+
+    module procedure get_num_nodes_nodes_abstract
+        num_nodes = nodes%num_nodes
+    end procedure
+
+
+
+    module procedure is_header_ascii_nodes_abstract
+        is_header = ( trim(text_line) .eq. STR_HEADER )
+    end procedure
+
+
+
+    module procedure write_section_footer_ascii_nodes_abstract
+
+        logical :: flag_termination
+        !! A local variable for this SUBROUTINE
+
+
+
+        associate( nodes => data_section )
+
+            call nodes%check_num_nodes(flag_termination)
+            if (flag_termination) return
+
+
+
+            call nodes%write_section_header_ascii_core( &!
+                write_unit = write_unit , &!
+                header     = STR_FOOTER , &!
+                iostat     = iostat     , &!
+                iomsg      = iomsg        &!
+            )
+
+        end associate
+
+    end procedure
+
+
+
+    module procedure write_section_header_ascii_nodes_abstract
+
+        logical :: flag_termination
+        !! A local variable for this SUBROUTINE
+
+
+
+        associate( nodes => data_section )
+
+            call nodes%check_num_nodes(flag_termination)
+            if (flag_termination) return
+
+
+
+            call nodes%write_section_header_ascii_core( &!
+                write_unit = write_unit , &!
+                header     = STR_HEADER , &!
+                iostat     = iostat     , &!
+                iomsg      = iomsg        &!
+            )
+
+        end associate
+
+    end procedure
+
+end submodule
+
+
+
+submodule (gmsh_reader_interface) nodes_version2_implementation
+
+    implicit none
+
+    contains
+
+
+
+    module procedure allocate_field_nodes_version2
+
+        associate( nodes => data_section )
+
+            allocate( &!
+                nodes%node( nodes%get_num_nodes() ) , &!
+                stat   = stat   , &!
+                errmsg = errmsg , &!
+                mold   = node_version2_t(DEFAULT_NUM_NODES, DEFAULT_COORDINATE) &!
+            )
+
+        end associate
+
+    end procedure
+
+
+
+    module procedure deallocate_field_nodes_version2
+
+        associate( nodes => data_section )
+
+            stat = STAT_OK
+
+
+
+            if ( allocated(nodes%node) ) then
+
+                deallocate( &!
+                    nodes%node      , &!
+                    stat   = stat   , &!
+                    errmsg = errmsg   &!
+                )
+                
+                if (stat .ne. STAT_OK) return
+
+            end if
+
+        end associate
+
+    end procedure
+
+
+
+    module procedure read_section_ascii_nodes_version2
+
+        integer(INT32) :: iter_item
+        !! A local support variable for this PROCEDURE
+
+
+
+        associate( nodes => data_section )
+
+            rewind( &!
+                unit   = read_unit , &!
+                iostat = stat      , &!
+                iomsg  = msg         &!
+            )
+
+            if (stat .ne. IOSTAT_OK) then
+                return
+            end if
+
+
+
+            call nodes%find_header_ascii( &!
+                read_unit = read_unit , &!
+                text_line = text_line , &!
+                iostat    = stat      , &!
+                iomsg     = msg         &!
+            )
+
+            if (stat .ne. IOSTAT_OK) then
+
+                return
+
+            else if (stat .eq. IOSTAT_END) then
+
+                nodes%num_nodes = 0
+
+                call nodes%deallocate_field(stat, msg)
+
+                return
+
+            end if
+
+
+
+            call nodes%deallocate_field(stat, msg)
+
+
+
+            read( &!
+                unit   = read_unit , &!
+                fmt    = *         , &!
+                iostat = stat      , &!
+                iomsg  = msg         &!
+            ) &!
+            nodes%num_nodes
+
+            if (stat .ne. IOSTAT_OK) then
+                return
+            end if
+
+
+
+            call nodes%allocate_field(stat, msg)
+
+
+
+            do iter_item = 1, nodes%get_num_nodes()
+
+                associate( target_node => nodes%node(iter_item) )
+
+                    read( &!
+                        unit   = read_unit , &!
+                        fmt    = *         , &!
+                        iostat = stat      , &!
+                        iomsg  = msg         &!
+                    ) &!
+                    target_node%node_number , &!
+                    target_node%coord%x     , &!
+                    target_node%coord%y     , &!
+                    target_node%coord%z
+
+                    if (stat .ne. IOSTAT_OK) then
+                        return
+                    end if
+
+                end associate
+
+            end do
+
+        end associate
+
+    end procedure
+
+
+
+    module procedure write_section_main_ascii_nodes_version2
+
+        logical :: flag_termination
+        !! A local variable for this SUBROUTINE
+
+        integer(INT32) :: iter_item
+        !! A local support variable for this PROCEDURE
+
+
+
+        associate( nodes => data_section )
+
+            call nodes%check_num_nodes(flag_termination)
+            if (flag_termination) return
+
+
+
+            write( &!
+                unit   = write_unit , &!
+                fmt    = '(I0)'     , &!
+                iostat = iostat     , &!
+                iomsg  = iomsg        &!
+            ) &!
+            nodes%get_num_nodes()
+
+            if (iostat .ne. IOSTAT_OK) return
+
+
+            do iter_item = 1, nodes%get_num_nodes()
+
+                associate( target_node => nodes%node(iter_item) )
+
+                    !!@todo reproduces the output of the C `printf' function with the format specifier "%g"
+                    write( &!
+                        unit   = write_unit   , &!
+                        fmt    = '(I0,3(1X,G0))' , &!
+                        iostat = iostat     , &!
+                        iomsg  = iomsg        &!
+                    ) &!
+                    target_node%get_node_number() , &!
+                    target_node%coord%get_x()     , &!
+                    target_node%coord%get_y()     , &!
+                    target_node%coord%get_z()
+
+                    if (iostat .ne. IOSTAT_OK) return
+
+                end associate
+
+            end do
+
+        end associate
+
     end procedure
 
 end submodule
