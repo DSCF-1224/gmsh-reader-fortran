@@ -150,6 +150,7 @@ module gmsh_reader_interface
         contains
 
         procedure,   pass, private :: find_header_ascii
+        procedure,   pass, private :: read_section_fore_ascii
         procedure, nopass, private :: write_section_header_ascii_core
         procedure,   pass, private :: write_section_ascii
 
@@ -523,6 +524,29 @@ module gmsh_reader_interface
 
 
         module subroutine read_section_ascii_abstract(data_section, read_unit, text_line, stat, msg)
+
+            class(data_section_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: read_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            character(len=LEN_TEXT_LINE), intent(inout) :: text_line
+            !! A dummy argument for this SUBROUTINE
+            !! Read text line buffer
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: msg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine read_section_fore_ascii(data_section, read_unit, text_line, stat, msg)
 
             class(data_section_t), intent(inout) :: data_section
             !! A dummy argument for this SUBROUTINE
@@ -1538,6 +1562,31 @@ submodule (gmsh_reader_interface) data_section_implementation
 
 
 
+    module procedure read_section_fore_ascii
+
+        rewind( &!
+            unit   = read_unit , &!
+            iostat = stat      , &!
+            iomsg  = msg         &!
+        )
+
+        if (stat .ne. IOSTAT_OK) then
+            return
+        end if
+
+
+
+        call data_section%find_header_ascii( &!
+            read_unit = read_unit , &!
+            text_line = text_line , &!
+            iostat    = stat      , &!
+            iomsg     = msg         &!
+        )
+
+    end procedure
+
+
+
     module procedure write_section_header_ascii_core
 
         write( &!
@@ -1824,14 +1873,16 @@ submodule (gmsh_reader_interface) mesh_format_implementation
 
 
 
-        associate( mesh_format => data_section )
+        call data_section%read_section_fore_ascii( &!
+            read_unit = read_unit , &!
+            text_line = text_line , &!
+            stat      = stat      , &!
+            msg       = msg         &!
+        )
 
-            call mesh_format%find_header_ascii( &!
-                read_unit = read_unit , &!
-                text_line = text_line , &!
-                iostat    = stat      , &!
-                iomsg     = msg         &!
-            )
+
+
+        associate( mesh_format => data_section )
 
             if (stat .ne. IOSTAT_OK) then
                 return
@@ -2258,26 +2309,16 @@ submodule (gmsh_reader_interface) nodes_version2_implementation
 
 
 
+        call data_section%read_section_fore_ascii( &!
+            read_unit = read_unit , &!
+            text_line = text_line , &!
+            stat      = stat      , &!
+            msg       = msg         &!
+        )
+
+
+
         associate( nodes => data_section )
-
-            rewind( &!
-                unit   = read_unit , &!
-                iostat = stat      , &!
-                iomsg  = msg         &!
-            )
-
-            if (stat .ne. IOSTAT_OK) then
-                return
-            end if
-
-
-
-            call nodes%find_header_ascii( &!
-                read_unit = read_unit , &!
-                text_line = text_line , &!
-                iostat    = stat      , &!
-                iomsg     = msg         &!
-            )
 
             if (stat .ne. IOSTAT_OK) then
 
@@ -2559,26 +2600,16 @@ submodule (gmsh_reader_interface) physical_names_implementation
 
 
 
+        call data_section%read_section_fore_ascii( &!
+            read_unit = read_unit , &!
+            text_line = text_line , &!
+            stat      = stat      , &!
+            msg       = msg         &!
+        )
+
+
+
         associate( physical_names => data_section )
-
-            rewind( &!
-                unit   = read_unit , &!
-                iostat = stat      , &!
-                iomsg  = msg         &!
-            )
-
-            if (stat .ne. IOSTAT_OK) then
-                return
-            end if
-
-
-
-            call physical_names%find_header_ascii( &!
-                read_unit = read_unit , &!
-                text_line = text_line , &!
-                iostat    = stat      , &!
-                iomsg     = msg         &!
-            )
 
             if (stat .ne. IOSTAT_OK) then
 
