@@ -156,6 +156,7 @@ module gmsh_reader_interface
 
         procedure( is_header_ascii_abstract            ), nopass, deferred, private :: is_header_ascii
         procedure( read_section_ascii_abstract         ),   pass, deferred, private :: read_section_ascii
+        procedure( read_section_rear_ascii_abstract    ),   pass, deferred, private :: read_section_rear_ascii
         procedure( reset_section_abstract              ),   pass, deferred, private :: reset_section
         procedure( write_section_footer_ascii_abstract ),   pass, deferred, private :: write_section_footer_ascii
         procedure( write_section_header_ascii_abstract ),   pass, deferred, private :: write_section_header_ascii
@@ -197,6 +198,7 @@ module gmsh_reader_interface
         procedure,   pass, public  :: get_data_size
         procedure, nopass, private :: is_header_ascii            => is_header_ascii_mesh_format
         procedure,   pass, private :: read_section_ascii         => read_section_ascii_mesh_format
+        procedure,   pass, private :: read_section_rear_ascii    => read_section_rear_ascii_mesh_format
         procedure,   pass, private :: reset_section              => reset_section_mesh_format
         procedure,   pass, private :: write_section_footer_ascii => write_section_footer_ascii_mesh_format
         procedure,   pass, private :: write_section_header_ascii => write_section_header_ascii_mesh_format
@@ -247,6 +249,7 @@ module gmsh_reader_interface
         procedure,   pass, public  :: get_num_physical_tag
         procedure, nopass, private :: is_header_ascii            => is_header_ascii_physical_names
         procedure,   pass, private :: read_section_ascii         => read_section_ascii_physical_names
+        procedure,   pass, private :: read_section_rear_ascii    => read_section_rear_ascii_physical_names
         procedure,   pass, private :: reset_section              => reset_section_physical_names
         procedure,   pass, private :: write_section_footer_ascii => write_section_footer_ascii_physical_names
         procedure,   pass, private :: write_section_header_ascii => write_section_header_ascii_physical_names
@@ -381,6 +384,7 @@ module gmsh_reader_interface
         procedure, pass, private :: allocate_field           => allocate_field_nodes_version2
         procedure, pass, private :: deallocate_field         => deallocate_field_nodes_version2
         procedure, pass, private :: read_section_ascii       => read_section_ascii_nodes_version2
+        procedure, pass, private :: read_section_rear_ascii  => read_section_rear_ascii_nodes_version2
         procedure, pass, private :: reset_section            => reset_section_nodes_version2
         procedure, pass, private :: write_section_main_ascii => write_section_main_ascii_nodes_version2
 
@@ -547,6 +551,29 @@ module gmsh_reader_interface
 
 
         module subroutine read_section_fore_ascii(data_section, read_unit, text_line, stat, msg)
+
+            class(data_section_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: read_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            character(len=LEN_TEXT_LINE), intent(inout) :: text_line
+            !! A dummy argument for this SUBROUTINE
+            !! Read text line buffer
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: msg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine read_section_rear_ascii_abstract(data_section, read_unit, text_line, stat, msg)
 
             class(data_section_t), intent(inout) :: data_section
             !! A dummy argument for this SUBROUTINE
@@ -872,6 +899,29 @@ module gmsh_reader_interface
 
 
         module subroutine read_section_ascii_mesh_format(data_section, read_unit, text_line, stat, msg)
+
+            class(mesh_format_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: read_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            character(len=LEN_TEXT_LINE), intent(inout) :: text_line
+            !! A dummy argument for this SUBROUTINE
+            !! Read text line buffer
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: msg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine read_section_rear_ascii_mesh_format(data_section, read_unit, text_line, stat, msg)
 
             class(mesh_format_t), intent(inout) :: data_section
             !! A dummy argument for this SUBROUTINE
@@ -1267,6 +1317,29 @@ module gmsh_reader_interface
 
 
 
+        module subroutine read_section_rear_ascii_nodes_version2(data_section, read_unit, text_line, stat, msg)
+
+            class(nodes_version2_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: read_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            character(len=LEN_TEXT_LINE), intent(inout) :: text_line
+            !! A dummy argument for this SUBROUTINE
+            !! Read text line buffer
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: msg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
         module subroutine reset_section_nodes_version2(data_section, stat, msg)
 
             class(nodes_version2_t), intent(inout) :: data_section
@@ -1406,6 +1479,29 @@ module gmsh_reader_interface
 
 
         module subroutine read_section_ascii_physical_names(data_section, read_unit, text_line, stat, msg)
+
+            class(physical_names_t), intent(inout) :: data_section
+            !! A dummy argument for this SUBROUTINE
+
+            integer, intent(in) :: read_unit
+            !! A dummy argument for this SUBROUTINE
+            !! The device number to read the target file
+
+            character(len=LEN_TEXT_LINE), intent(inout) :: text_line
+            !! A dummy argument for this SUBROUTINE
+            !! Read text line buffer
+
+            integer, intent(out) :: stat
+            !! A dummy argument for this SUBROUTINE
+
+            character(len=*), intent(inout) :: msg
+            !! A dummy argument for this SUBROUTINE
+
+        end subroutine
+
+
+
+        module subroutine read_section_rear_ascii_physical_names(data_section, read_unit, text_line, stat, msg)
 
             class(physical_names_t), intent(inout) :: data_section
             !! A dummy argument for this SUBROUTINE
@@ -1865,14 +1961,6 @@ submodule (gmsh_reader_interface) mesh_format_implementation
 
     module procedure read_section_ascii_mesh_format
 
-        integer(INT32) :: file_type
-        !! A local variable for this PROCEDURE
-
-        integer :: index_space
-        !! A local variable for this PROCEDURE
-
-
-
         call data_section%read_section_fore_ascii( &!
             read_unit = read_unit , &!
             text_line = text_line , &!
@@ -1880,7 +1968,24 @@ submodule (gmsh_reader_interface) mesh_format_implementation
             msg       = msg         &!
         )
 
+        call data_section%read_section_rear_ascii( &!
+            read_unit = read_unit , &!
+            text_line = text_line , &!
+            stat      = stat      , &!
+            msg       = msg         &!
+        )
 
+    end procedure
+
+
+
+    module procedure read_section_rear_ascii_mesh_format
+
+        integer(INT32) :: file_type
+        !! A local variable for this PROCEDURE
+
+        integer :: index_space
+        !! A local variable for this PROCEDURE
 
         associate( mesh_format => data_section )
 
@@ -2304,17 +2409,28 @@ submodule (gmsh_reader_interface) nodes_version2_implementation
 
     module procedure read_section_ascii_nodes_version2
 
-        integer(INT32) :: iter_item
-        !! A local support variable for this PROCEDURE
-
-
-
         call data_section%read_section_fore_ascii( &!
             read_unit = read_unit , &!
             text_line = text_line , &!
             stat      = stat      , &!
             msg       = msg         &!
         )
+
+        call data_section%read_section_rear_ascii( &!
+            read_unit = read_unit , &!
+            text_line = text_line , &!
+            stat      = stat      , &!
+            msg       = msg         &!
+        )
+
+    end procedure
+
+
+
+    module procedure read_section_rear_ascii_nodes_version2
+
+        integer(INT32) :: iter_item
+        !! A local support variable for this PROCEDURE
 
 
 
@@ -2595,17 +2711,28 @@ submodule (gmsh_reader_interface) physical_names_implementation
 
     module procedure read_section_ascii_physical_names
 
-        integer(INT32) :: iter_item
-        !! A local support variable for this PROCEDURE
-
-
-
         call data_section%read_section_fore_ascii( &!
             read_unit = read_unit , &!
             text_line = text_line , &!
             stat      = stat      , &!
             msg       = msg         &!
         )
+
+        call data_section%read_section_rear_ascii( &!
+            read_unit = read_unit , &!
+            text_line = text_line , &!
+            stat      = stat      , &!
+            msg       = msg         &!
+        )
+
+    end procedure
+
+
+
+    module procedure read_section_rear_ascii_physical_names
+
+        integer(INT32) :: iter_item
+        !! A local support variable for this PROCEDURE
 
 
 
